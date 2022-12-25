@@ -1,0 +1,7 @@
+version: # version
+
+lexicons:
+  liwc2015:
+    dic: # liwc 2015 dic format file
+  values:
+    csv: # csv file

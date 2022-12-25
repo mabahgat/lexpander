@@ -1,0 +1,7 @@
+pies,Physical|food
+book,Lifestyle|work
+love,Affect|tone_pos|emotion|emo_pos|Social|socbehav|allure
+abnormality,Cognition|cogproc|discrep
+abusion,Drives|power|Affect|tone_neg
+abuser,Drives|power|Affect|tone_neg|Social|socbehav|conflict|socrefs
+minute,quantity|time

@@ -1,0 +1,15 @@
+%
+1	label1
+2	label2
+3	label3
+4	label4
+5	label5
+6	label6
+%
+word1	1
+word2	2	3
+word3	3	5
+word4	2	6
+word5	6
+wild1*	3	5
+wild2*	2

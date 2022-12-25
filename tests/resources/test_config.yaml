@@ -1,0 +1,8 @@
+version: 0.1
+paths:
+  lex: /path/to/lex
+  dict: /path/to/dict
+values:
+  lex:
+    primary: one
+    secondary: two
