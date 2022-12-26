@@ -419,9 +419,7 @@ class Liwc22(Lexicon):
         :param use_labels: values for used labels only
         :param from_tool_output: if the passed csv file is usual pipe separated csv or generated from LIWC22 tool output
         """
-        if csv_path is None:
-            csv_path = global_config.lexicons.liwc22.csv
-        self.__file_path = csv_path
+        self.__csv_path = csv_path
         self.__use_labels = use_labels
         self.__from_tool_output = from_tool_output
         self._lookup = self.__load()
@@ -433,7 +431,9 @@ class Liwc22(Lexicon):
             return self.__load_from_pipe_csv()
 
     def __load_from_tool_output(self):
-        csv_df = pd.read_csv(self.__file_path, index_col='Text')
+        if self.__csv_path is None:
+            self.__csv_path = global_config.lexicons.liwc22.tool_out
+        csv_df = pd.read_csv(self.__csv_path, index_col='Text')
         csv_df = csv_df[csv_df['Dic'] > 0]
         csv_df = csv_df.drop(columns=Liwc22.EXCLUDED_COLUMNS)
         csv_df = csv_df.drop(columns=csv_df.columns[0])
@@ -446,7 +446,7 @@ class Liwc22(Lexicon):
             for cat_str, value in row_dict.items():
                 if isinstance(value, str):
                     raise LexiconFormatError(
-                        'Error for word "{}" at line "{}" in file {}'.format(value, i, self.__file_path))
+                        'Error for word "{}" at line "{}" in file {}'.format(value, i, self.__csv_path))
                 if value > 0:
                     labels_lst.append(cat_str)
             if self.__use_labels:
@@ -457,7 +457,9 @@ class Liwc22(Lexicon):
         return csv_df['labels'].to_dict()
 
     def __load_from_pipe_csv(self):
-        csv_df = pd.read_csv(self.__file_path, index_col=0, names=['word', 'labels_raw'])
+        if self.__csv_path is None:
+            self.__csv_path = global_config.lexicons.liwc22.csv
+        csv_df = pd.read_csv(self.__csv_path, index_col=0, names=['word', 'labels_raw'])
 
         def to_label_list(raw_labels: str) -> List[str]:
             labels = raw_labels.split('|')
@@ -488,7 +490,7 @@ class Liwc22(Lexicon):
         labels = self.get_labels()
         return {
             'name': 'liwc22',
-            'file_path': self.__file_path,
+            'file_path': self.__csv_path,
             'labels': labels,
             'labels_count': len(labels),
             'from_tool_output': self.__from_tool_output

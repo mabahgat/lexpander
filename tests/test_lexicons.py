@@ -104,8 +104,8 @@ def test_liwc2015_limited_cats():
     assert liwc.label_token('word5') == []
     assert liwc.label_token('wild1') == ['label3']
 
-    assert liwc.get_labels() == ['label1', 'label3']
-    assert conf['labels'] == ['label1', 'label3']
+    assert liwc.get_labels() == {'label1', 'label3'}
+    assert conf['labels'] == {'label1', 'label3'}
     assert conf['label_count'] == 2
 
 
@@ -199,6 +199,6 @@ def test_liwc22_only_labels():
 
 
 def test_liwc22_load_default_path():
-    lexicon = Liwc22()
+    lexicon = Liwc22(from_tool_output=True)
     conf = lexicon.get_conf()
     assert conf['file_path'] is not None

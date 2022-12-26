@@ -5,3 +5,6 @@ lexicons:
     dic: # liwc 2015 dic format file
   values:
     csv: # csv file
+  liwc22:
+    tool_out: # liwc 22 output
+    csv: # csv file with pipe separating multiple labels
