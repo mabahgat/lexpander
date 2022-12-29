@@ -1,6 +1,6 @@
 import pandas as pd
 
-from datasets.dictionaries import list_dataset_names, DictionaryDataset, DatasetNotFoundError
+from datasets.base import list_dataset_names, Dataset, DatasetNotFoundError
 import pytest
 
 
@@ -25,12 +25,12 @@ def test_dictionary_datasets_new(tmp_path):
     valid_df = pd.DataFrame.from_dict(data)
     test_df = pd.DataFrame.from_dict(data)
 
-    dataset = DictionaryDataset(name='test_dataset',
-                                train_df=train_df,
-                                valid_df=valid_df,
-                                test_df=test_df,
-                                source_path='/some/path',
-                                datasets_root_path=datasets_root_path)
+    dataset = Dataset(name='test_dataset',
+                      train_df=train_df,
+                      valid_df=valid_df,
+                      test_df=test_df,
+                      source_path='/some/path',
+                      datasets_root_path=datasets_root_path)
 
     assert 'test_dataset' in list_dataset_names(datasets_root_path)
     assert (datasets_root_path / 'test_dataset' / 'test_dataset__train.csv').exists()
@@ -76,15 +76,15 @@ def test_dictionary_dataset_load(tmp_path):
     valid_df = pd.DataFrame.from_dict(data)
     test_df = pd.DataFrame.from_dict(data)
 
-    DictionaryDataset(name='test_dataset',
-                      train_df=train_df,
-                      valid_df=valid_df,
-                      test_df=test_df,
-                      source_path='/some/path',
-                      datasets_root_path=datasets_root_path)
+    Dataset(name='test_dataset',
+            train_df=train_df,
+            valid_df=valid_df,
+            test_df=test_df,
+            source_path='/some/path',
+            datasets_root_path=datasets_root_path)
 
-    new_dataset = DictionaryDataset(name='test_dataset',
-                                    datasets_root_path=datasets_root_path)
+    new_dataset = Dataset(name='test_dataset',
+                          datasets_root_path=datasets_root_path)
 
     conf = new_dataset.get_conf()
     assert conf['name'] == 'test_dataset'
@@ -106,10 +106,10 @@ def test_dictionary_dataset_load(tmp_path):
 
 def test_dictionary_dataset_no_name_error():
     with pytest.raises(ValueError):
-        DictionaryDataset(name=None)
+        Dataset(name=None)
 
 
 def test_dictionary_dataset_not_found_error(tmp_path):
     datasets_root_path = tmp_path
     with pytest.raises(DatasetNotFoundError):
-        DictionaryDataset('blah', datasets_root_path=datasets_root_path)
+        Dataset('blah', datasets_root_path=datasets_root_path)

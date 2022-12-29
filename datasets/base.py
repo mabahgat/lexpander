@@ -25,7 +25,7 @@ class DatasetNotFoundError(FileNotFoundError):
     pass
 
 
-class DictionaryDataset(ObjectWithConf):
+class Dataset(ObjectWithConf):
     
     def __init__(self,
                  name: str,
@@ -105,19 +105,19 @@ class DictionaryDataset(ObjectWithConf):
         return df.copy(deep=True)
 
     def get_train(self):
-        return DictionaryDataset.__copy(self._train_df)
+        return Dataset.__copy(self._train_df)
 
     def get_valid(self):
-        return DictionaryDataset.__copy(self._valid_df)
+        return Dataset.__copy(self._valid_df)
 
     def get_test(self):
-        return DictionaryDataset.__copy(self._test_df)
+        return Dataset.__copy(self._test_df)
 
     def get_all(self):
         if self._valid_df is None:
-            return DictionaryDataset.__copy(pd.concat([self._train_df, self._test_df]))
+            return Dataset.__copy(pd.concat([self._train_df, self._test_df]))
         else:
-            return DictionaryDataset.__copy(pd.concat([self._train_df, self._valid_df, self._test_df]))
+            return Dataset.__copy(pd.concat([self._train_df, self._valid_df, self._test_df]))
 
     def get_conf(self):
         valid_path = str(self._valid_path) if self._valid_df is not None else None
