@@ -1,4 +1,4 @@
-from lists import StopWordsLookup, FileLookUp, NamesLookUp
+from lists import StopWordsLookUp, FileLookUp, NamesLookUp
 from tests.utils import get_abs_file_path
 
 
@@ -37,7 +37,7 @@ def test_names_lookup_default_path():
 
 
 def test_stopwords():
-    stopwords = StopWordsLookup()
+    stopwords = StopWordsLookUp()
     conf = stopwords.get_conf()
 
     assert stopwords.contains('a')

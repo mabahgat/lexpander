@@ -29,8 +29,8 @@ def test_lookup_lexicon():
     lex = LookUpLexicon(lex_path)
 
     assert sorted(lex.get_labels()) == sorted(['noun', 'verb', 'article'])
-    assert lex.label_token('word') == ['noun']
-    assert sorted(lex.label_token('book')) == sorted(['noun', 'verb'])
+    assert lex.label_term('word') == ['noun']
+    assert sorted(lex.label_term('book')) == sorted(['noun', 'verb'])
 
     lex_conf = lex.get_conf()
     assert lex_path == lex_conf['file_path']
@@ -71,18 +71,18 @@ def test_liwc2015_config():
 def test_liwc2015_strict():
     liwc = Liwc2015(dic_path=__liwc2015_dic_path(), strict_matching=True)
 
-    assert liwc.label_token('word1') == ['label1']
-    assert liwc.label_token('blah') == []
-    assert liwc.label_token('wild1') == ['label3', 'label5']
-    assert liwc.label_token('wild1suffix') == []
+    assert liwc.label_term('word1') == ['label1']
+    assert liwc.label_term('blah') == []
+    assert liwc.label_term('wild1') == ['label3', 'label5']
+    assert liwc.label_term('wild1suffix') == []
 
 
 def test_liwc2015():
     liwc = Liwc2015(dic_path=__liwc2015_dic_path())
 
-    assert liwc.label_token('word1suffix') == []
-    assert liwc.label_token('wild1') == ['label3', 'label5']
-    assert liwc.label_token('wild1suffix') == ['label3', 'label5']
+    assert liwc.label_term('word1suffix') == []
+    assert liwc.label_term('wild1') == ['label3', 'label5']
+    assert liwc.label_term('wild1suffix') == ['label3', 'label5']
 
 
 def test_liwc2015_limited_cats():
@@ -99,10 +99,10 @@ def test_liwc2015_limited_cats():
                     dic_path=__liwc2015_dic_path())
     conf = liwc.get_conf()
 
-    assert liwc.label_token('word1') == ['label1']
-    assert liwc.label_token('word2') == ['label1', 'label3']
-    assert liwc.label_token('word5') == []
-    assert liwc.label_token('wild1') == ['label3']
+    assert liwc.label_term('word1') == ['label1']
+    assert liwc.label_term('word2') == ['label1', 'label3']
+    assert liwc.label_term('word5') == []
+    assert liwc.label_term('wild1') == ['label3']
 
     assert liwc.get_labels() == {'label1', 'label3'}
     assert conf['labels'] == {'label1', 'label3'}
@@ -131,11 +131,11 @@ def test_lookup_lexicon_with_mapping():
                                        label_map=label_map)
     conf = lexicon.get_conf()
 
-    assert lexicon.label_token('word1') == ['value1']
-    assert lexicon.label_token('word3') == ['value3']
-    assert lexicon.label_token('word4') == []
-    assert lexicon.label_token('word5') == ['value1']
-    assert lexicon.label_token('word6') == []
+    assert lexicon.label_term('word1') == ['value1']
+    assert lexicon.label_term('word3') == ['value3']
+    assert lexicon.label_term('word4') == []
+    assert lexicon.label_term('word5') == ['value1']
+    assert lexicon.label_term('word6') == []
 
     assert conf['labels'] == {'value1', 'value3'}
     assert conf['label_count'] == 2
@@ -147,8 +147,8 @@ def test_values():
     lexicon = Values(csv_path=dict_path)
     conf = lexicon.get_conf()
 
-    assert lexicon.label_token('word1') == ['value1', 'value2']
-    assert lexicon.label_token('word4') == ['value2']
+    assert lexicon.label_term('word1') == ['value1', 'value2']
+    assert lexicon.label_term('word4') == ['value2']
 
     assert conf['name'] == 'values'
 
@@ -164,10 +164,10 @@ def test_liwc2022_from_csv():
     lexicon = Liwc22(path)
     conf = lexicon.get_conf()
 
-    assert lexicon.label_token('pies') == ['Physical', 'food']
-    assert lexicon.label_token('Pies') == ['Physical', 'food']
-    assert lexicon.label_token('minute') == ['quantity', 'time']
-    assert lexicon.label_token('minutes') == []
+    assert lexicon.label_term('pies') == ['Physical', 'food']
+    assert lexicon.label_term('Pies') == ['Physical', 'food']
+    assert lexicon.label_term('minute') == ['quantity', 'time']
+    assert lexicon.label_term('minutes') == []
     assert conf['file_path'] == path
 
 
@@ -176,10 +176,10 @@ def test_liwc2022_from_liwc_output():
     lexicon = Liwc22(path, from_tool_output=True)
     conf = lexicon.get_conf()
 
-    assert lexicon.label_token('pies') == ['Physical', 'food']
-    assert lexicon.label_token('Pies') == ['Physical', 'food']
-    assert lexicon.label_token('swop') == []
-    assert lexicon.label_token('Pieses') == []
+    assert lexicon.label_term('pies') == ['Physical', 'food']
+    assert lexicon.label_term('Pies') == ['Physical', 'food']
+    assert lexicon.label_term('swop') == []
+    assert lexicon.label_term('Pieses') == []
     assert conf['file_path'] == path
 
 
@@ -189,12 +189,12 @@ def test_liwc22_only_labels():
     lexicon = Liwc22(path, use_labels=use_labels)
     conf = lexicon.get_conf()
 
-    assert lexicon.label_token('pies') == ['Physical']
-    assert lexicon.label_token('Pies') == ['Physical']
-    assert lexicon.label_token('minute') == ['quantity', 'time']
-    assert lexicon.label_token('book') == []
-    assert lexicon.label_token('abusion') == ['Drives']
-    assert lexicon.label_token('minutes') == []
+    assert lexicon.label_term('pies') == ['Physical']
+    assert lexicon.label_term('Pies') == ['Physical']
+    assert lexicon.label_term('minute') == ['quantity', 'time']
+    assert lexicon.label_term('book') == []
+    assert lexicon.label_term('abusion') == ['Drives']
+    assert lexicon.label_term('minutes') == []
     assert conf['file_path'] == path
 
 

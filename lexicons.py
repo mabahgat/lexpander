@@ -71,7 +71,7 @@ class LabelMapper(ObjectWithConf):
 class Lexicon(ObjectWithConf):
 
     @abstractmethod
-    def label_token(self, token: str) -> List[str]:
+    def label_term(self, token: str) -> List[str]:
         pass
 
     @abstractmethod
@@ -112,7 +112,7 @@ class LookUpLexicon(Lexicon):
                 label_class_set.add(label)
             return lookup_dict, label_class_set
 
-    def label_token(self, token: str) -> List[str]:
+    def label_term(self, token: str) -> List[str]:
         if token not in self._lookup:
             return []
         else:
@@ -239,7 +239,7 @@ class Liwc2015(Lexicon):
 
         return {remove_wild_card(key): value for key, value in self.__liwc.lexicon.items()}
 
-    def label_token(self, token: str) -> List[str]:
+    def label_term(self, token: str) -> List[str]:
         if self.__strict_matching:
             labels = self.__liwc_lookup.get(token, [])
         else:
@@ -276,8 +276,8 @@ class LookUpLexiconWithMapping(LookUpLexicon):
         else:
             self.__label_mapper = None
 
-    def label_token(self, token: str) -> List[str]:
-        labels = super().label_token(token)
+    def label_term(self, token: str) -> List[str]:
+        labels = super().label_term(token)
         if self.__label_mapper is not None:
             return self.__label_mapper.map_list(labels)
         else:
@@ -469,7 +469,7 @@ class Liwc22(Lexicon):
         csv_df['labels'] = csv_df['labels_raw'].apply(to_label_list)
         return csv_df['labels'].to_dict()
 
-    def label_token(self, token: str) -> List[str]:
+    def label_term(self, token: str) -> List[str]:
         token = token.lower()
         if token not in self._lookup:
             return []

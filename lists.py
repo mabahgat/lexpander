@@ -6,7 +6,7 @@ from common import ObjectWithConf
 from config import global_config
 
 
-class LookupList(ObjectWithConf, ABC):
+class LookUpList(ObjectWithConf, ABC):
 
     def __init__(self):
         self._lookup = set()
@@ -15,7 +15,7 @@ class LookupList(ObjectWithConf, ABC):
         return value.lower() in self._lookup
 
 
-class FileLookUp(LookupList):
+class FileLookUp(LookUpList):
 
     def __init__(self, path: str):
         super().__init__()
@@ -35,7 +35,7 @@ class FileLookUp(LookupList):
         return {
             'file_path': self.__list_path,
             'count': len(self._lookup),
-            'case_insensitive': True
+            'case_sensitive': False
         }
 
 
@@ -51,11 +51,11 @@ class NamesLookUp(FileLookUp):
         return conf
 
 
-class StopWordsLookup(LookupList):
+class StopWordsLookUp(LookUpList):
 
     def __init__(self):
         super().__init__()
-        self._lookup = StopWordsLookup.__load()
+        self._lookup = StopWordsLookUp.__load()
 
     @staticmethod
     def __load():
@@ -71,6 +71,6 @@ class StopWordsLookup(LookupList):
     def get_conf(self):
         return {
             'library': 'nltk {}'.format(nltk.__version__),
-            'case_insensitive': True,
+            'case_sensitive': False,
             'count': len(self._lookup)
         }

@@ -78,7 +78,7 @@ class Dataset(ObjectWithConf):
         if not self._root_path.exists():
             self._root_path.mkdir(parents=True, exist_ok=overwrite)
         self._train_df.to_csv(self._train_path)
-        if self._valid_path is not None:
+        if self._valid_df is not None:
             self._valid_df.to_csv(self._valid_path)
         self._test_df.to_csv(self._test_path)
         with open(self.__get_conf_path(), mode='w') as conf_file:
@@ -108,7 +108,10 @@ class Dataset(ObjectWithConf):
         return Dataset.__copy(self._train_df)
 
     def get_valid(self):
-        return Dataset.__copy(self._valid_df)
+        if self._valid_df is not None:
+            return Dataset.__copy(self._valid_df)
+        else:
+            return None
 
     def get_test(self):
         return Dataset.__copy(self._test_df)

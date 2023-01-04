@@ -40,7 +40,21 @@ class Dictionary(ObjectWithConf):
         }
 
 
+class SimpleDictionary(Dictionary):
+
+    def _load(self) -> pd.DataFrame:
+        return pd.read_csv(self._file_path, index_col=0)
+
+
 class BadFileType(TypeError):
+    pass
+
+
+class ColumnNotFound(ValueError):
+    """
+    Used when a column is missing from a dictionary, and it was expected to exist.
+    Example, if a dictionary does not have a "quality" column, but it is expected to contain it somewhere in the code
+    """
     pass
 
 
