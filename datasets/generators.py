@@ -77,7 +77,7 @@ class DatasetGenerator(ObjectWithConf):
 		self.__random = Random(0)
 
 	def generate(self) -> List[Dataset]:
-		labeled_dictionaries = self.__get_labeled_entries()
+		labeled_dictionaries = [entries.sample(frac=1) for entries in self.__get_labeled_entries()]
 		test_terms = self.__generate_test_terms_for_all(labeled_dictionaries)
 		test_sets = self.__select_test_sets(labeled_dictionaries, test_terms)
 		train_sets = DatasetGenerator.__select_train_sets(labeled_dictionaries, test_terms)
@@ -180,7 +180,6 @@ class DatasetGenerator(ObjectWithConf):
 				label_set_sizes[label] += 1
 			actual_size = sum(label_set_sizes.values())
 
-
 		self.__actual_test_count = actual_size
 
 		labeled_terms = {term: self.__lexicon.label_term(term)[0] for term in available_terms}
@@ -206,9 +205,8 @@ class DatasetGenerator(ObjectWithConf):
 		df = df.sample(frac=1, random_state=0)
 		if Dictionary.QUALITY_COLUMN in df:
 			df = df\
-				.sort_values(by=Dictionary.QUALITY_COLUMN, ascending=False)\
 				.groupby(by=Dictionary.WORD_COLUMN, as_index=False)\
-				.head(1)
+				.apply(lambda g: g.sort_values(by=Dictionary.QUALITY_COLUMN, ascending=False).head(1))
 		else:
 			df = df.groupby(by=Dictionary.WORD_COLUMN, as_index=False).head(1)
 

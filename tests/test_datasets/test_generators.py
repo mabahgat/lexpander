@@ -1,7 +1,7 @@
 from datasets.base import list_dataset_names
 from datasets.generators import DatasetGenerator
 from lexicons import LookUpLexicon
-from dictionaries import SimpleDictionary
+from dictionaries import SimpleDictionary, Dictionary
 from tests.utils import get_abs_file_path
 
 
@@ -37,6 +37,11 @@ def __get_test_dictionary_2():
     :return:
     """
     dict_path = get_abs_file_path(__file__, '../resources/dictionaries/rand_dict_5_labels_words_50-349.csv')
+    return SimpleDictionary(name='test-2', file_path=dict_path)
+
+
+def __get_test_shuffled_dictionary():
+    dict_path = get_abs_file_path(__file__, '../resources/dictionaries/rand_5_labels_0-299_shuffled.csv')
     return SimpleDictionary(name='test-2', file_path=dict_path)
 
 
@@ -180,6 +185,27 @@ def test_generate_test_label_distribution_with_force_test_count(tmp_path):
     assert label_counts['label_3'] == 5 or label_counts['label_3'] == 6
     assert label_counts['label_4'] == 5 or label_counts['label_4'] == 6
     assert label_counts['label_5'] == 7 or label_counts['label_5'] == 8
+
+
+def test_generate_test_highest_quality(tmp_path):
+    lexicon = __get_test_lexicon()
+    dictionary = __get_test_shuffled_dictionary()
+    generator = DatasetGenerator(exp_name='exp_percentage',
+                                 lexicon=lexicon,
+                                 dictionaries=dictionary,
+                                 test_percentage=0.1,
+                                 force_test_count=True,
+                                 dataset_root_path=tmp_path)
+    dataset = generator.generate()[0]
+    all_df = dictionary.get_all_records()
+    test_df = dataset.get_test()
+
+    def check_highest_quality(row):
+        test_term = row[Dictionary.WORD_COLUMN]
+        test_quality = row[Dictionary.QUALITY_COLUMN]
+        highest_quality = all_df[all_df.word == test_term].quality.sort_values(ascending=False).head(1).to_list()[0]
+        assert test_quality == highest_quality
+    test_df.apply(check_highest_quality, axis=1)
 
 
 def test_generate_with_two(tmp_path):
