@@ -1,5 +1,6 @@
 from abc import abstractmethod
-from typing import List, Dict, Set
+from pathlib import Path
+from typing import List, Dict, Set, Optional, Type
 import os.path
 from liwc import Liwc
 import pandas as pd
@@ -81,6 +82,29 @@ class Lexicon(ObjectWithConf):
         :return: Unordered Set
         """
         pass
+
+
+def get_lexicon_by_name_or_none(name: str, custom_path: Path = None) -> Optional[Lexicon]:
+    """
+    Gets a lexicon instance by name. This only works for a specific predefined list of lexicons
+    :param name: Name of lexicon
+    :param custom_path: custom path to use while loading that lexicon
+    :return: An instance of lexicon if a corresponding type is found, else none
+    """
+    def get_instance(klass: Type[Lexicon]):
+        if custom_path is None:
+            return klass()
+        else:
+            return klass(csv_path=custom_path)
+
+    if name == 'liwc2015':
+        return Liwc2015(strict_matching=True)
+    elif name == 'values':
+        return get_instance(Values)
+    elif name == 'liwc22':
+        return get_instance(Liwc22)
+    else:
+        return None
 
 
 class LookUpLexicon(Lexicon):
