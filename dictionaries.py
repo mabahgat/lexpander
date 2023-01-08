@@ -30,6 +30,11 @@ class Dictionary(ObjectWithConf):
         return self._records.copy(deep=True)
 
     def get_definition(self, term: str) -> str:
+        """
+        Returns the definitions for a single term
+        :param term:
+        :return:
+        """
         return self._records.loc[term]
 
     def get_conf(self):

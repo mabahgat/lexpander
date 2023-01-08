@@ -8,4 +8,4 @@ def get_abs_file_path(file, relative_path: str):
     :param relative_path: relative path string
     :return: absolute path string
     """
-    return '{}/{}'.format(Path(file).parent.resolve(), relative_path)
+    return Path(file).parent.resolve() / relative_path

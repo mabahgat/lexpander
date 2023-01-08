@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import List, Tuple
 
 import pandas as pd
-import yaml
 
 from common import ObjectWithConf
 from config import global_config
@@ -58,13 +57,13 @@ class Dataset(ObjectWithConf):
             self._save(overwrite_if_exists)
         else:
             self._train_df, self._valid_df, self._test_df = self._load()
-            self.__source_path = self.__load_conf()['source_file']
+            self.__source_path = Path(self.__load_conf()['source_file'])
 
     def __generate_paths(self) -> Tuple[Path, Path, Path, Path]:
         root_path = self._datasets_root_path / self._name
 
         def get_file_path(set_type: str) -> Path:
-            return root_path / '{}__{}.csv'.format(self._name, set_type)
+            return root_path / f'{self._name}__{set_type}.csv'
         train_path = get_file_path('train')
         valid_path = get_file_path('valid')
         test_path = get_file_path('test')
@@ -72,7 +71,7 @@ class Dataset(ObjectWithConf):
         return root_path, train_path, valid_path, test_path
 
     def __get_conf_path(self):
-        return self._root_path / '{}__conf.yaml'.format(self._name)
+        return self._root_path / f'{self._name}__conf.yaml'
 
     def _save(self, overwrite: bool):
         if not self._root_path.exists():
@@ -81,13 +80,12 @@ class Dataset(ObjectWithConf):
         if self._valid_df is not None:
             self._valid_df.to_csv(self._valid_path)
         self._test_df.to_csv(self._test_path)
-        with open(self.__get_conf_path(), mode='w') as conf_file:
-            yaml.dump(self.get_conf(), conf_file)
+        self._save_conf(self.__get_conf_path())
 
     def _load(self):
         if self._name not in list_dataset_names(self._datasets_root_path):
-            raise DatasetNotFoundError('A dataset with name "{}" was not found in {}'
-                                       .format(self._name, str(self._datasets_root_path)))
+            raise DatasetNotFoundError(f'A dataset with name "{self._name}" was not found '
+                                       f'in {str(self._datasets_root_path)}')
         train_df = pd.read_csv(self._train_path)
         if self._valid_path.exists():
             valid_df = pd.read_csv(self._valid_path)
@@ -97,8 +95,7 @@ class Dataset(ObjectWithConf):
         return train_df, valid_df, test_df
 
     def __load_conf(self):
-        with open(self.__get_conf_path(), mode='r') as conf_file:
-            return yaml.safe_load(conf_file)
+        return self._load_conf(self.__get_conf_path())
     
     @staticmethod
     def __copy(df: pd.DataFrame):
@@ -134,5 +131,6 @@ class Dataset(ObjectWithConf):
             'train_count': len(self._train_df),
             'valid_count': valid_count,
             'test_count': len(self._test_df),
-            'source_file': self.__source_path
+            'source_file': str(self.__source_path),
+            'datasets_root_path': str(self._datasets_root_path)
         }

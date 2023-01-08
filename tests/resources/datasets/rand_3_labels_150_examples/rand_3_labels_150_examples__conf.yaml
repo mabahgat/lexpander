@@ -1,0 +1,10 @@
+name: rand_3_labels_150_examples
+root_path: ../resources/datasets/rand_3_labels_150_examples
+train_path: ../resources/datasets/rand_3_labels_150_examples/rand_3_labels_150_examples__train.csv
+valid_path: None
+test_path: ../resources/datasets/rand_3_labels_150_examples/rand_3_labels_150_examples__test.csv
+train_count: 100
+valid_count: None
+test_count: 40
+source_file: None
+datasets_root_path: ../resources/datasets
