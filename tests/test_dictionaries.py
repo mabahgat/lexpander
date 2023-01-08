@@ -1,7 +1,24 @@
 import pandas as pd
+import pytest
 
-from dictionaries import UrbanDictionary, Wiktionary
+from dictionaries import UrbanDictionary, Wiktionary, get_dictionary_by_name, InvalidDictionaryName
 from tests.utils import get_abs_file_path
+
+
+def test_get_dictionary_by_name():
+    ud_path = get_abs_file_path(__file__, 'resources/dictionaries/ud.csv')
+    ud = get_dictionary_by_name('ud', custom_path=ud_path)
+    assert type(ud) is UrbanDictionary
+
+    ud2 = get_dictionary_by_name('urban_dictionary', custom_path=ud_path)
+    assert type(ud2) is UrbanDictionary
+
+    wk_path = get_abs_file_path(__file__, 'resources/dictionaries/wiktionary_raw.csv')
+    wk = get_dictionary_by_name('wiktionary', custom_path=wk_path)
+    assert type(wk) is Wiktionary
+
+    with pytest.raises(InvalidDictionaryName):
+        get_dictionary_by_name('blah')
 
 
 def test_urban_dictionary_load_raw():
@@ -20,6 +37,14 @@ def test_urban_dictionary_load_raw():
     assert conf['count'] == 13
     assert conf['file_path'] == file_path
     assert conf['file_type'] == 'raw'
+
+
+def test_urban_dictionary_load_csv():
+    file_path = get_abs_file_path(__file__, 'resources/dictionaries/ud.csv')
+    dictionary = UrbanDictionary(file_path=file_path, file_type='csv')
+    records = dictionary.get_all_records()
+
+    assert len(records) == 2
 
 
 def test_urban_dictionary_load_raw_text_check():

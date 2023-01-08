@@ -1,6 +1,8 @@
 import re
 import urllib.parse
 from abc import abstractmethod
+from typing import Type
+
 import pandas as pd
 
 from common import ObjectWithConf
@@ -63,6 +65,30 @@ class ColumnNotFound(ValueError):
     pass
 
 
+class InvalidDictionaryName(ValueError):
+    pass
+
+
+def get_dictionary_by_name(name: str, custom_path: str = None) -> Dictionary:
+    """
+    Gets a dictionary by name. This only works for specific predefined list of dictionaries
+    :param name: name string
+    :param custom_path: custom path to use while loading that dictionary
+    :return: An instance of dictionary if corresponding type is found
+    """
+    def get_instance(klass: Type[Dictionary]):
+        if custom_path is None:
+            return klass()
+        else:
+            return klass(file_path=custom_path)
+    if name == 'wiktionary':
+        return get_instance(Wiktionary)
+    elif name == 'ud' or name == 'urban_dictionary':
+        return get_instance(UrbanDictionary)
+    else:
+        raise InvalidDictionaryName(f'Invalid dictionary name "{name}"')
+
+
 class DictionaryWithTwoFormats(Dictionary):
     """
     Parse raw file and csv formats.
@@ -108,7 +134,7 @@ class DictionaryWithTwoFormats(Dictionary):
         pass
 
     def _load_csv(self):
-        return pd.read_csv(self._file_type, index_col=0)
+        return pd.read_csv(self._file_path, index_col=0)
 
     def save_as_csv(self, file_path: str):
         self._records.to_csv(file_path)
