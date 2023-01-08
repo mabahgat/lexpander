@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 import pandas as pd
 
-from common import ObjectWithConf
+from common import ObjectWithConf, list_sorted_names_in_dir
 from config import global_config
 
 
@@ -17,7 +17,7 @@ def list_dataset_names(datasets_root_path: Path = get_dataset_root_path()) -> Li
     :param datasets_root_path: Optional override for datasets root directory
     :return: Names as string list
     """
-    return sorted([d.name for d in datasets_root_path.glob('*') if d.is_dir()])
+    return list_sorted_names_in_dir(datasets_root_path)
 
 
 class DatasetNotFoundError(FileNotFoundError):

@@ -1,8 +1,12 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 
 import yaml
+
+
+def list_sorted_names_in_dir(dir_path: Path) -> List[str]:
+    return sorted([m.name for m in dir_path.glob('*') if m.is_dir()])
 
 
 class ObjectWithConf(ABC):

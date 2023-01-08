@@ -6,7 +6,7 @@ from typing import Optional, List
 
 import pandas as pd
 
-from common import ObjectWithConf
+from common import ObjectWithConf, list_sorted_names_in_dir
 from config import global_config, Config
 from datasets.base import Dataset
 from dictionaries import Dictionary
@@ -25,7 +25,7 @@ def list_model_names(models_root_path: Path = get_models_root_path()) -> List[st
 	:param models_root_path: Optional override for model root directory
 	:return: Names as string list
 	"""
-	return sorted([m.name for m in models_root_path.glob('*') if m.is_dir()])
+	return list_sorted_names_in_dir(models_root_path)
 
 
 class ModelAlreadyExists(FileExistsError):
