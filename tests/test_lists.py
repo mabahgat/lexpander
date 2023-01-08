@@ -12,7 +12,7 @@ def test_file_lookup():
 
     assert conf['file_path'] == lookup_path
     assert conf['count'] == 9
-    assert conf['case_insensitive'] == True
+    assert conf['case_sensitive'] == False
 
 
 def test_names_lookup():
@@ -25,7 +25,7 @@ def test_names_lookup():
 
     assert conf['file_path'] == lookup_path
     assert conf['count'] == 9
-    assert conf['case_insensitive'] == True
+    assert conf['case_sensitive'] == False
     assert conf['name'] == 'names'
 
 
@@ -42,4 +42,4 @@ def test_stopwords():
 
     assert stopwords.contains('a')
     assert conf['library'] is not None
-    assert conf['case_insensitive'] == True
+    assert conf['case_sensitive'] == False
