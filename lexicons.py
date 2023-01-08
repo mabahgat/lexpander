@@ -17,6 +17,10 @@ class InvalidLabelError(ValueError):
     pass
 
 
+class InvalidLexiconName(ValueError):
+    pass
+
+
 class LabelMapper(ObjectWithConf):
     """
     Maps and excludes labels.
@@ -84,7 +88,7 @@ class Lexicon(ObjectWithConf):
         pass
 
 
-def get_lexicon_by_name_or_none(name: str, custom_path: Path = None) -> Optional[Lexicon]:
+def get_lexicon_by_name(name: str, custom_path: Path = None) -> Optional[Lexicon]:
     """
     Gets a lexicon instance by name. This only works for a specific predefined list of lexicons
     :param name: Name of lexicon
@@ -104,7 +108,7 @@ def get_lexicon_by_name_or_none(name: str, custom_path: Path = None) -> Optional
     elif name == 'liwc22':
         return get_instance(Liwc22)
     else:
-        return None
+        raise InvalidLexiconName(f'Invalid lexicon name "{name}"')
 
 
 class LookUpLexicon(Lexicon):

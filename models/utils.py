@@ -6,10 +6,14 @@ from models.base import Model, get_models_root_path
 from models.transformers import BertClassifier
 
 
-def get_model_by_name_or_none(name: str,
-							  exp_name: str,
-							  dataset: Dataset = None,
-							  models_root_path: Path = get_models_root_path()) -> Optional[Model]:
+class InvalidModelName(ValueError):
+	pass
+
+
+def get_model_by_name(name: str,
+					  exp_name: str,
+					  dataset: Dataset = None,
+					  models_root_path: Path = get_models_root_path()) -> Optional[Model]:
 	"""
 	Gets a model instance by name. This only works for a specific predefined list of models
 	:param name: Name of lexicon
@@ -21,4 +25,4 @@ def get_model_by_name_or_none(name: str,
 	if name == 'bert':
 		return BertClassifier(exp_name=exp_name, dataset=dataset, models_root_path=models_root_path)
 	else:
-		return None
+		raise InvalidModelName(f'Invalid model name "{name}"')
