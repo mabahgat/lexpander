@@ -1,4 +1,5 @@
 from datasets.base import Dataset
+from dictionaries import Dictionary
 from models.transformers import BertClassifier
 from tests.utils import get_abs_file_path
 
@@ -53,3 +54,10 @@ def test_bert_classifier_conf(tmp_path):
 	assert (models_root_path / 'model_test' / 'tf_model.h5').exists()
 	assert (models_root_path / 'model_test' / 'config.json').exists()
 	assert (models_root_path / 'model_test' / 'model_test__conf.yaml').exists()
+
+	ud_path = get_abs_file_path(__file__, 'resources/dictionaries/ud.csv')
+	dictionary = Dictionary('ud', ud_path)
+	labeled_df = model.apply(dictionary)
+
+	assert 'label_out' in labeled_df
+	assert 'prob_out' in labeled_df

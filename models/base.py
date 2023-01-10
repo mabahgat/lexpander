@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List
+from typing import List
 
 import pandas as pd
 
@@ -42,10 +42,13 @@ class ModelInitializationError(ValueError):
 
 class Model(ObjectWithConf, ABC):
 
+	LABEL_OUT_COLUMN = 'label_out'
+	PROB_OUT_COLUMN = 'prob_out'
+
 	def __init__(self,
 				 exp_name: str,
 				 type_name: str,
-				 dataset: Optional[Dataset],
+				 dataset: Dataset = None,
 				 overwrite_if_exists: bool = False,
 				 models_root_path: Path = None):
 		"""
@@ -121,11 +124,10 @@ class Model(ObjectWithConf, ABC):
 		return conf
 
 	@abstractmethod
-	def apply(self, dictionary: Dictionary, skip_labeled: bool = True) -> pd.DataFrame:
+	def apply(self, dictionary: Dictionary) -> pd.DataFrame:
 		"""
 		Apply a trained model on a dictionary
 		:param dictionary:
-		:param skip_labeled: If there are labeled entries skip them
 		:return: Data frame with "label_out" and "prob_out" columns for label assigned by model and probability of
 		assigned label
 		"""

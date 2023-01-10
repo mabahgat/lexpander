@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List
 
 import pandas as pd
 import numpy as np
@@ -75,12 +76,14 @@ class BertClassifier(Model):
 		return label_2_idx, idx_2_label
 
 	def __encode_set(self, df: pd.DataFrame):
-		text_lst = df.text.to_list()
-		x = self._tokenizer.encode_plus(text_lst, truncation=True, padding='max_length')
+		x = self.__encode_text(df.text.to_list())
 
 		label_lst = df.label.to_list()
 		y = np.array([self._label_2_idx[label] for label in label_lst])
 		return x, y
+
+	def __encode_text(self, text: List[str]):
+		return self._tokenizer.encode_plus(text, truncation=True, padding='max_length')
 
 	def _train(self) -> bool:
 		"""
@@ -108,9 +111,7 @@ class BertClassifier(Model):
 	def _eval(self):
 		if self.__cached_performance_result is None:
 			test_x, test_y = self.__encode_set(self._test_df)
-			test_y_out_prob = tf.nn.softmax(self._model.predict(test_x).logits).numpy().tolist()
-			test_y_out = [np.argmax(o) for o in test_y_out_prob]
-			test_y_label_out = [self._idx_2_label[index] for index in test_y_out]
+			test_y_label_out, test_y_out_prob, test_y_out = self.__apply(test_x)
 
 			self.__cached_test_labels = test_y_label_out
 			self.__cached_test_label_probs = test_y_out_prob
@@ -129,6 +130,17 @@ class BertClassifier(Model):
 			}
 
 		return self.__cached_performance_result
+
+	def __apply(self, encoded_text) -> (List[str], List[float], List[int]):
+		"""
+		Applies a model to encoded text
+		:param encoded_text: encoded (tokenized in the case of BERT) ready for the model to consume
+		:return: list of labels, list of probabilities, list of labels but in the form of indexes
+		"""
+		probs = tf.nn.softmax(self._model.predict(encoded_text).logits).numpy().tolist()
+		label_indexes = [np.argmax(o) for o in probs]
+		labels = [self._idx_2_label[index] for index in label_indexes]
+		return labels, probs, label_indexes
 
 	def __model_path(self) -> Path:
 		return self._models_root_path / self._exp_name
@@ -157,8 +169,14 @@ class BertClassifier(Model):
 		model.load_weights(weights_file_path)
 		return model
 
-	def apply(self, dictionary: Dictionary, skip_labeled: bool = True) -> pd.DataFrame:
-		pass
+	def apply(self, dictionary: Dictionary) -> pd.DataFrame:
+		df = dictionary.get_all_records()
+		text = df.text.to_list()
+		encoded_text = self.__encode_text(text)
+		labels, probs, _ = self.__apply(encoded_text)
+		df[Model.LABEL_OUT_COLUMN] = labels
+		df[Model.PROB_OUT_COLUMN] = probs
+		return df
 
 	def get_conf(self):
 		conf = super().get_conf()
