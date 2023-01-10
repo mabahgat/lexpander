@@ -77,7 +77,7 @@ class DatasetGenerator(ObjectWithConf):
 		self.__random = Random(0)
 
 	def generate(self) -> List[Dataset]:
-		labeled_dictionaries = [entries.sample(frac=1) for entries in self.__get_labeled_entries()]
+		labeled_dictionaries = [entries.sample(frac=1, random_state=0) for entries in self.__get_labeled_entries()]
 		test_terms = self.__generate_test_terms_for_all(labeled_dictionaries)
 		test_sets = self.__select_test_sets(labeled_dictionaries, test_terms)
 		train_sets = DatasetGenerator.__select_train_sets(labeled_dictionaries, test_terms)
