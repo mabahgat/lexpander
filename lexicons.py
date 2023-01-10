@@ -88,27 +88,34 @@ class Lexicon(ObjectWithConf):
         pass
 
 
-def get_lexicon_by_name(name: str, custom_path: Path = None) -> Optional[Lexicon]:
+def get_lexicon(name: str = None, custom_lexicon_path: Path = None) -> Optional[Lexicon]:
     """
     Gets a lexicon instance by name. This only works for a specific predefined list of lexicons
-    :param name: Name of lexicon
-    :param custom_path: custom path to use while loading that lexicon
-    :return: An instance of lexicon if a corresponding type is found, else none
+    :param name: name string
+    :param custom_lexicon_path: custom path to use while loading that lexicon
+    :return: An instance of lexicon if a corresponding type is found
     """
+
+    if name is None and custom_lexicon_path is None:
+        raise ValueError('Either name or lexicon path has to be specified. Both are None')
+
     def get_instance(klass: Type[Lexicon]):
-        if custom_path is None:
+        if custom_lexicon_path is None:
             return klass()
         else:
-            return klass(csv_path=custom_path)
+            return klass(csv_path=custom_lexicon_path)
 
-    if name == 'liwc2015':
-        return Liwc2015(strict_matching=True)
-    elif name == 'values':
-        return get_instance(Values)
-    elif name == 'liwc22':
-        return get_instance(Liwc22)
+    if name is not None:
+        if name == 'liwc2015':
+            return Liwc2015(strict_matching=True)
+        elif name == 'values':
+            return get_instance(Values)
+        elif name == 'liwc22':
+            return get_instance(Liwc22)
+        else:
+            raise InvalidLexiconName(f'Invalid lexicon name "{name}"')
     else:
-        raise InvalidLexiconName(f'Invalid lexicon name "{name}"')
+        return LookUpLexicon(custom_lexicon_path)
 
 
 class LookUpLexicon(Lexicon):
@@ -456,7 +463,7 @@ class Liwc22(Lexicon):
         if self.__from_tool_output:
             return self.__load_from_tool_output()
         else:
-            return self.__load_from_pipe_csv()
+            return self.__load_from_csv()
 
     def __load_from_tool_output(self):
         if self.__csv_path is None:
@@ -484,7 +491,7 @@ class Liwc22(Lexicon):
         csv_df['labels'] = csv_df.apply(get_annotations, axis=1)
         return csv_df['labels'].to_dict()
 
-    def __load_from_pipe_csv(self):
+    def __load_from_csv(self):
         if self.__csv_path is None:
             self.__csv_path = global_config.lexicons.liwc22.csv
         csv_df = pd.read_csv(self.__csv_path, index_col=0, names=['word', 'labels_raw'])

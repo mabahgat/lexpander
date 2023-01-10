@@ -1,40 +1,37 @@
 import pytest
 from lexicons import LookUpLexicon, LexiconFormatError, Liwc2015, LabelMapper, Values, LookUpLexiconWithMapping, Liwc22, \
-    get_lexicon_by_name, InvalidLexiconName
+    get_lexicon, InvalidLexiconName
 from tests.utils import get_abs_file_path
 
 
-def test_get_lexicon_by_name_or_none():
-    liwc2015 = get_lexicon_by_name('liwc2015')
-    assert type(liwc2015) == Liwc2015
-    assert liwc2015.get_conf()['strict'] == True
-
-    values = get_lexicon_by_name('values')
-    assert type(values) == Values
-
-    liwc22 = get_lexicon_by_name('liwc22')
-    assert type(liwc22) == Liwc22
-
-    with pytest.raises(InvalidLexiconName):
-        get_lexicon_by_name('blah')
-
-
-def test_get_lexicon_by_name_or_none_custom_path():
+def test_get_lexicon_by_name_and_custom_path():
     liwc2015_path = __liwc2015_dic_path()
-    liwc2015 = get_lexicon_by_name('liwc2015', custom_path=liwc2015_path)
+    liwc2015 = get_lexicon('liwc2015', custom_lexicon_path=liwc2015_path)
     assert type(liwc2015) == Liwc2015
     assert liwc2015.get_conf()['strict'] == True
 
     values_path = get_abs_file_path(__file__, 'resources/lexicons/test_values.csv')
-    values = get_lexicon_by_name('values', custom_path=values_path)
+    values = get_lexicon('values', custom_lexicon_path=values_path)
     assert type(values) == Values
 
     liwc22_path = get_abs_file_path(__file__, 'resources/lexicons/test_liwc22_lookup.csv')
-    liwc22 = get_lexicon_by_name('liwc22', custom_path=liwc22_path)
+    liwc22 = get_lexicon('liwc22', custom_lexicon_path=liwc22_path)
     assert type(liwc22) == Liwc22
 
     with pytest.raises(InvalidLexiconName):
-        get_lexicon_by_name('blah')
+        get_lexicon('blah')
+
+
+def test_get_lexicon_by_path():
+    values_path = get_abs_file_path(__file__, 'resources/lexicons/test_values.csv')
+    lookup = get_lexicon(custom_lexicon_path=values_path)
+
+    assert type(lookup) is LookUpLexicon
+
+
+def test_get_lexicon_by_name_bad_arguments():
+    with pytest.raises(ValueError):
+        get_lexicon(name=None, custom_lexicon_path=None)
 
 
 def test_label_mapper():
