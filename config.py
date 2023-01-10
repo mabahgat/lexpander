@@ -27,5 +27,8 @@ class Config:
     def __getitem__(self, key):
         return self.__getattribute__(key)
 
+    def __contains__(self, item):
+        return item in self._config_dict
+
 
 global_config = load_config()
