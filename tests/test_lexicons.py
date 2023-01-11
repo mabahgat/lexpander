@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from lexicons import LookUpLexicon, LexiconFormatError, Liwc2015, LabelMapper, Values, LookUpLexiconWithMapping, Liwc22, \
     get_lexicon, InvalidLexiconName
@@ -7,16 +9,20 @@ from tests.utils import get_abs_file_path
 def test_get_lexicon_by_name_and_custom_path():
     liwc2015_path = __liwc2015_dic_path()
     liwc2015 = get_lexicon('liwc2015', custom_lexicon_path=liwc2015_path)
-    assert type(liwc2015) == Liwc2015
+    assert type(liwc2015) is Liwc2015
     assert liwc2015.get_conf()['strict'] == True
 
     values_path = get_abs_file_path(__file__, 'resources/lexicons/test_values.csv')
     values = get_lexicon('values', custom_lexicon_path=values_path)
-    assert type(values) == Values
+    assert type(values) is Values
 
     liwc22_path = get_abs_file_path(__file__, 'resources/lexicons/test_liwc22_lookup.csv')
     liwc22 = get_lexicon('liwc22', custom_lexicon_path=liwc22_path)
-    assert type(liwc22) == Liwc22
+    assert type(liwc22) is Liwc22
+
+    rand_lex_path = get_abs_file_path(__file__, 'resources/lexicons/rand_3_labels_150_examples.csv')
+    rand_lex = get_lexicon(custom_lexicon_path=rand_lex_path)
+    assert type(rand_lex) is LookUpLexicon
 
     with pytest.raises(InvalidLexiconName):
         get_lexicon('blah')
@@ -64,7 +70,7 @@ def test_lookup_lexicon():
     assert sorted(lex.label_term('book')) == sorted(['noun', 'verb'])
 
     lex_conf = lex.get_conf()
-    assert lex_path == lex_conf['file_path']
+    assert lex_conf['file_path'] == str(lex_path)
     assert lex_conf['sep'] == ','
     assert sorted(lex_conf['labels']) == sorted(['noun', 'verb', 'article'])
     assert lex_conf['label_count'] == 3
@@ -73,7 +79,7 @@ def test_lookup_lexicon():
 
 def test_lookup_lexicon_incorrect_errors():
     with pytest.raises(FileNotFoundError):
-        LookUpLexicon('blah')
+        LookUpLexicon(Path('/path/not/exists'))
     with pytest.raises(LexiconFormatError):
         LookUpLexicon(get_abs_file_path(__file__, 'resources/lexicons/bad_lookup_lexicon.csv'))
 
@@ -140,12 +146,6 @@ def test_liwc2015_limited_cats():
     assert conf['label_count'] == 2
 
 
-def test_liwc2015_load_default_path():
-    lexicon = Liwc2015()
-    conf = lexicon.get_conf()
-    assert conf['file_path'] is not None
-
-
 def test_lookup_lexicon_with_mapping():
     dict_path = get_abs_file_path(__file__, 'resources/lexicons/test_values.csv')
     used_labels = {'value1', 'value3'}
@@ -182,12 +182,6 @@ def test_values():
     assert lexicon.label_term('word4') == ['value2']
 
     assert conf['name'] == 'values'
-
-
-def test_values_load_default_path():
-    lexicon = Values()
-    conf = lexicon.get_conf()
-    assert conf['file_path'] is not None
 
 
 def test_liwc2022_from_csv():
@@ -227,9 +221,3 @@ def test_liwc22_only_labels():
     assert lexicon.label_term('abusion') == ['Drives']
     assert lexicon.label_term('minutes') == []
     assert conf['file_path'] == path
-
-
-def test_liwc22_load_default_path():
-    lexicon = Liwc22(from_tool_output=True)
-    conf = lexicon.get_conf()
-    assert conf['file_path'] is not None

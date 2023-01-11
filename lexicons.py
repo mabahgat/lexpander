@@ -106,7 +106,10 @@ def get_lexicon(name: str = None, custom_lexicon_path: Path = None) -> Optional[
 
     if name is not None:
         if name == 'liwc2015':
-            return Liwc2015(strict_matching=True)
+            if custom_lexicon_path is None:
+                return Liwc2015(strict_matching=True)
+            else:
+                return Liwc2015(strict_matching=True, dic_path=custom_lexicon_path)
         elif name == 'values':
             return get_instance(Values)
         elif name == 'liwc22':
@@ -248,7 +251,7 @@ class Liwc2015(Lexicon):
     def __init__(self,
                  use_labels: Set[str] = None,
                  label_map: Dict[str, str] = DEFAULT_LABELS_MAP,
-                 dic_path: str = None,
+                 dic_path: Path = None,
                  strict_matching: bool = False):
         self.__dic_path = dic_path if dic_path is not None else global_config.lexicons.liwc2015.dic
         self.__strict_matching = strict_matching
@@ -288,7 +291,7 @@ class Liwc2015(Lexicon):
 
     def get_conf(self) -> Dict[str, Any]:
         return {
-            'file_path': self.__dic_path,
+            'file_path': str(self.__dic_path),
             'strict': self.__strict_matching,
             'labels': self.__labels,
             'label_count': len(self.__labels),
