@@ -9,7 +9,7 @@ from sklearn import metrics
 
 from datasets.base import Dataset
 from dictionaries import Dictionary
-from models.base import Model, list_model_names, ModelInitializationError
+from models.base import Model
 
 
 class BertClassifier(Model):
@@ -24,7 +24,8 @@ class BertClassifier(Model):
 				 learning_rate: float = DEFAULT_LEARNING_RATE,
 				 epochs: int = DEFAULT_EPOCHS,
 				 overwrite_if_exists: bool = False,
-				 models_root_path: Path = None):
+				 models_root_path: Path = None,
+				 dataset_root_path: Path = None):
 		"""
 		Creates a new empty model that should be trained
 		:param exp_name: Names of the experiment being run. Should be the same as the value passed to DatasetGenerator
@@ -34,18 +35,15 @@ class BertClassifier(Model):
 		:param epochs:
 		:param models_root_path: Optional override for where models are stored
 		"""
-		if exp_name not in list_model_names() and dataset is None:
-			raise ModelInitializationError(f'Either specify an existing model name '
-										   f'or specify the dataset to train a new model')
-
 		model_type = f'{TFBertForSequenceClassification.__name__}__{pretrained_model_name}'
 		super().__init__(exp_name=exp_name,
 						 type_name=model_type,
 						 dataset=dataset,
 						 overwrite_if_exists=overwrite_if_exists,
-						 models_root_path=models_root_path)
+						 models_root_path=models_root_path,
+						 datasets_root_path=dataset_root_path)
 
-		if not self._model_already_exists():
+		if not self._model_exists:
 			self._pretrained_model_name = pretrained_model_name
 			self._learning_rate = learning_rate
 			self._epochs = epochs
@@ -116,8 +114,8 @@ class BertClassifier(Model):
 			self.__cached_test_labels = test_y_label_out
 			self.__cached_test_label_probs = test_y_out_prob
 
-			f_score = metrics.f1_score(test_y, test_y_out, average='macro')
-			accuracy = metrics.accuracy_score(test_y, test_y_out)
+			f_score = float(metrics.f1_score(test_y, test_y_out, average='macro'))
+			accuracy = float(metrics.accuracy_score(test_y, test_y_out))
 			report = metrics.classification_report(test_y,
 												   test_y_out,
 												   labels=list(self._idx_2_label.keys()),
@@ -149,19 +147,40 @@ class BertClassifier(Model):
 		model_path = self.__model_path()
 		self._model.save_pretrained(model_path)
 		self._save_conf(self._get_conf_path())
+		self.__save_test_labels()
 		self._logger.info(f'Model saved to {model_path}')
 
+	def __get_test_results_path(self):
+		"""
+		Path to store test labels and probabilities assigned by the model
+		:return:
+		"""
+		return self.__model_path() / f'{self._exp_name}__test_out.csv'
+
+	def __save_test_labels(self):
+		test_df = self._test_df.copy(deep=True)
+		test_df[Model.LABEL_OUT_COLUMN] = self.__cached_test_labels
+		test_df[Model.PROB_OUT_COLUMN] = self.__cached_test_label_probs
+		test_df.to_csv(self.__get_test_results_path())
+
 	def _load(self):
-		conf = super()._load_conf(self._get_conf_path())
+		conf = super()._load()
 		self._epochs = conf.epochs
-		self._learning_rate = conf.learing_rate
+		self._learning_rate = conf.learning_rate
 		self._pretrained_model_name = conf.pretrained_model_name
 
-		self._label_2_idx = conf.label_2_idx
+		self._label_2_idx = conf.label_2_idx.to_dict()
 		self._idx_2_label = {index: label for label, index in self._label_2_idx.items()}
 
 		self._tokenizer = TFBertTokenizer.from_pretrained(self._pretrained_model_name)
 		self._model = self.__load_model()
+
+		self.__load_test_labels()
+
+	def __load_test_labels(self):
+		test_df = pd.read_csv(self.__get_test_results_path(), index_col=0)
+		self.__cached_test_labels = test_df.label_out.to_list()
+		self.__cached_test_label_probs = test_df.prob_out.to_list()
 
 	def __load_model(self):
 		model = self.__build_model()
