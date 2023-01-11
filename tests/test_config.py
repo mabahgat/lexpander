@@ -49,3 +49,21 @@ def test_contains():
     assert 'param4' not in config
     assert 'param3_1' in config.param3
     assert 'param3_3' not in config.param3
+
+
+def test_to_dict():
+    dict_data = {
+        'param1': 'value1',
+        'param2': 'value2',
+        'param3': {
+            'param3_1': 'value3.1',
+            'param3_2': {
+                'param3_2_1': 'value3.2.1'
+            }
+        }
+    }
+    config = Config(config_dict=dict_data)
+
+    assert type(config) is Config
+    assert type(config.to_dict()) is dict
+    assert type(config.param3.to_dict()) is dict

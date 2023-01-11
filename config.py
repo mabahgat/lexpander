@@ -30,5 +30,8 @@ class Config:
     def __contains__(self, item):
         return item in self._config_dict
 
+    def to_dict(self):
+        return self._config_dict
+
 
 global_config = load_config()
