@@ -52,7 +52,7 @@ def test_dataset_generator_conf():
                                  lexicon=lexicon,
                                  dictionaries=dictionary,
                                  test_count=30,
-                                 exclusions=None)
+                                 exclusions=[])
     conf = generator.get_conf()
     assert conf['name'] == 'some_exp'
     assert conf['lexicon'] == lexicon.get_conf()
@@ -62,7 +62,7 @@ def test_dataset_generator_conf():
     assert conf['force_test_count'] == False
     assert conf['test_percentage'] is None
     assert conf['same_train_set'] == False
-    assert conf['exclusions'] is None
+    assert conf['exclusions'] == []
 
 
 def test_generate_single_test_count(tmp_path):
@@ -73,6 +73,7 @@ def test_generate_single_test_count(tmp_path):
                                  dictionaries=dictionary,
                                  test_count=30,
                                  force_test_count=True,
+                                 exclusions=[],
                                  dataset_root_path=tmp_path)
     dataset = generator.generate()[0]
     assert len(dataset.get_test()) == 30
@@ -86,6 +87,7 @@ def test_generate_single_dataset_files(tmp_path):
                                  lexicon=lexicon,
                                  dictionaries=dictionary,
                                  test_count=30,
+                                 exclusions=[],
                                  dataset_root_path=datasets_root_path)
     generator.generate()
 
@@ -102,6 +104,7 @@ def test_generate_single_test_train_mutually_exclusive(tmp_path):
                                  lexicon=lexicon,
                                  dictionaries=dictionary,
                                  test_count=30,
+                                 exclusions=[],
                                  dataset_root_path=tmp_path)
     dataset = generator.generate()[0]
     train_df = dataset.get_train()
@@ -118,6 +121,7 @@ def test_generate_with_percentage(tmp_path):
                                  lexicon=lexicon,
                                  dictionaries=dictionary,
                                  test_percentage=0.1,
+                                 exclusions=[],
                                  dataset_root_path=tmp_path)
     dataset = generator.generate()[0]
     assert len(dataset.get_test()) == 29
@@ -131,6 +135,7 @@ def test_generate_with_percentage_and_forced_count(tmp_path):
                                  dictionaries=dictionary,
                                  test_percentage=0.1,
                                  force_test_count=True,
+                                 exclusions=[],
                                  dataset_root_path=tmp_path)
     dataset = generator.generate()[0]
     assert len(dataset.get_test()) == 30
@@ -144,6 +149,7 @@ def test_generate_for_quality(tmp_path):
                                  dictionaries=dictionary,
                                  test_percentage=0.1,
                                  quality_threshold=2,
+                                 exclusions=[],
                                  dataset_root_path=tmp_path)
     dataset = generator.generate()[0]
     all_df = dataset.get_all()
@@ -157,6 +163,7 @@ def test_generate_test_label_distribution(tmp_path):
                                  lexicon=lexicon,
                                  dictionaries=dictionary,
                                  test_percentage=0.1,
+                                 exclusions=[],
                                  dataset_root_path=tmp_path)
     dataset = generator.generate()[0]
     label_counts = dataset.get_test().label.value_counts().to_dict()
@@ -176,6 +183,7 @@ def test_generate_test_label_distribution_with_force_test_count(tmp_path):
                                  dictionaries=dictionary,
                                  test_percentage=0.1,
                                  force_test_count=True,
+                                 exclusions=[],
                                  dataset_root_path=tmp_path)
     dataset = generator.generate()[0]
     label_counts = dataset.get_test().label.value_counts().to_dict()
@@ -195,6 +203,7 @@ def test_generate_test_highest_quality(tmp_path):
                                  dictionaries=dictionary,
                                  test_percentage=0.1,
                                  force_test_count=True,
+                                 exclusions=[],
                                  dataset_root_path=tmp_path)
     dataset = generator.generate()[0]
     all_df = dictionary.get_all_records()
@@ -217,6 +226,7 @@ def test_generate_with_two(tmp_path):
                                  dictionaries=[dictionary1, dictionary2],
                                  test_count=30,
                                  force_test_count=True,
+                                 exclusions=[],
                                  dataset_root_path=tmp_path)
     dataset1, dataset2 = generator.generate()
 
@@ -239,6 +249,7 @@ def test_generate_with_two_files(tmp_path):
                                  dictionaries=[dictionary1, dictionary2],
                                  test_count=30,
                                  force_test_count=True,
+                                 exclusions=[],
                                  dataset_root_path=tmp_path)
     generator.generate()
 

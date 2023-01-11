@@ -24,8 +24,6 @@ class DatasetGenerator(ObjectWithConf):
 	the average of the total instances for each label is taken across the multiple dictionaries.
 	"""
 
-	__DEFAULT_EXCLUSIONS = tuple([NamesLookUp(), StopWordsLookUp()])
-
 	LABEL_COLUMN = 'label'
 
 	def __init__(self,
@@ -37,7 +35,7 @@ class DatasetGenerator(ObjectWithConf):
 				 test_percentage: float = None,
 				 same_train_set: bool = False,
 				 quality_threshold: int = None,
-				 exclusions: List[LookUpList] = __DEFAULT_EXCLUSIONS,
+				 exclusions: List[LookUpList] = None,
 				 overwrite_if_exists: bool = False,
 				 dataset_root_path: Path = None):
 		"""
@@ -52,7 +50,9 @@ class DatasetGenerator(ObjectWithConf):
 		:param test_percentage: Alternative for test_count, float value for percentage
 		:param same_train_set: whether to use same terms or not
 		:param quality_threshold: Optional threshold (inclusive) to discard instances with lower quality value
-		:param exclusions: List of lists of terms to be excluded from the dataset
+		:param exclusions: List of lists of terms to be excluded from the dataset.
+			None will use the default list which excludes names and stopwords.
+			An empty list will skip all exclusions
 		:param overwrite_if_exists: Passed on to Datasets class to either overwrite or throw error if dataset exists
 		:param dataset_root_path: Overrides default path for storing datasets
 		"""
@@ -70,7 +70,7 @@ class DatasetGenerator(ObjectWithConf):
 		self.__test_percentage = test_percentage
 		self.__same_train_set = same_train_set
 		self.__quality_threshold = quality_threshold
-		self.__exclusions = exclusions
+		self.__exclusions = exclusions if exclusions is not None else [NamesLookUp(), StopWordsLookUp()]
 		self.__overwrite_if_exists = overwrite_if_exists
 		self.__dataset_root_path = dataset_root_path
 
