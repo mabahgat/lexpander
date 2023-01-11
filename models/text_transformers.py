@@ -83,7 +83,7 @@ class BertClassifier(Model):
 		return x, y
 
 	def __encode_text(self, text: List[str]):
-		return self._tokenizer.encode_plus(text, truncation=True, padding='max_length')
+		return self._tokenizer(text, truncation=True, padding='max_length')
 
 	def _train(self) -> bool:
 		"""
