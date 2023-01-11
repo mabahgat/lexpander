@@ -7,11 +7,11 @@ from common import ObjectWithConf, list_sorted_names_in_dir
 from config import global_config
 
 
-def get_dataset_root_path() -> Path:
+def get_datasets_root_path() -> Path:
     return Path(global_config.storage.root) / global_config.storage.datasets_subdir
 
 
-def list_dataset_names(datasets_root_path: Path = get_dataset_root_path()) -> List[str]:
+def list_dataset_names(datasets_root_path: Path = get_datasets_root_path()) -> List[str]:
     """
     Returns a list of dictionaries
     :param datasets_root_path: Optional override for datasets root directory
@@ -47,7 +47,7 @@ class Dataset(ObjectWithConf):
         if name is None:
             raise ValueError('Dataset name can not be none')
         self._name = name
-        self._datasets_root_path = datasets_root_path if datasets_root_path is not None else get_dataset_root_path()
+        self._datasets_root_path = datasets_root_path if datasets_root_path is not None else get_datasets_root_path()
         self._root_path, self._train_path, self._valid_path, self._test_path = self.__generate_paths()
         if train_df is not None and test_df is not None:
             self._train_df = train_df

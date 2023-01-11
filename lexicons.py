@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from pathlib import Path
-from typing import List, Dict, Set, Optional, Type
-import os.path
+from typing import List, Dict, Set, Optional, Type, Any
 from liwc import Liwc
 import pandas as pd
 
@@ -123,14 +122,14 @@ class LookUpLexicon(Lexicon):
     Loads a lexicon based on exact match.
     """
 
-    def __init__(self, file_path: str, sep: str = ','):
+    def __init__(self, file_path: Path, sep: str = ','):
         self._path = file_path
         self._sep = sep
         self._lookup, self._labels = self.__load()
 
     def __load(self):
-        if not os.path.exists(self._path):
-            raise FileNotFoundError('Path invalid or does not exist "{}"'.format(self._path))
+        if not self._path.exists():
+            raise FileNotFoundError(f'Path invalid or does not exist "{self._path}"')
 
         lookup_dict = {}
         label_class_set = set()
@@ -156,9 +155,9 @@ class LookUpLexicon(Lexicon):
     def get_labels(self) -> Set[str]:
         return self._labels
 
-    def get_conf(self) -> Dict[str, object]:
+    def get_conf(self) -> Dict[str, Any]:
         return {
-            'file_path': self._path,
+            'file_path': str(self._path),
             'sep': self._sep,
             'labels': self._labels,
             'label_count': len(self._labels),
@@ -287,7 +286,7 @@ class Liwc2015(Lexicon):
     def get_labels(self) -> Set[str]:
         return self.__labels
 
-    def get_conf(self) -> Dict[str, object]:
+    def get_conf(self) -> Dict[str, Any]:
         return {
             'file_path': self.__dic_path,
             'strict': self.__strict_matching,
@@ -303,7 +302,7 @@ class LookUpLexiconWithMapping(LookUpLexicon):
     def __init__(self,
                  use_labels: Set[str],
                  label_map: Dict[str, str],
-                 csv_path: str):
+                 csv_path: Path):
         super().__init__(file_path=csv_path)
         if use_labels is not None:
             self.__label_mapper = LabelMapper(use_labels=use_labels, label_map=label_map)
@@ -318,7 +317,7 @@ class LookUpLexiconWithMapping(LookUpLexicon):
         else:
             return labels
 
-    def get_conf(self) -> Dict[str, object]:
+    def get_conf(self) -> Dict[str, Any]:
         conf = super().get_conf()
         if self.__label_mapper is not None:
             conf['label_map'] = self.__label_mapper.get_conf()
@@ -389,7 +388,7 @@ class Values(LookUpLexiconWithMapping):
             csv_path = global_config.lexicons.values.csv
         super().__init__(use_labels=use_labels, label_map=label_map, csv_path=csv_path)
 
-    def get_conf(self) -> Dict[str, object]:
+    def get_conf(self) -> Dict[str, Any]:
         conf = super().get_conf()
         conf['name'] = 'values'
         return conf
@@ -521,7 +520,7 @@ class Liwc22(Lexicon):
                     labels.add(label)
             return labels
 
-    def get_conf(self) -> Dict[str, object]:
+    def get_conf(self) -> Dict[str, Any]:
         labels = self.get_labels()
         return {
             'name': 'liwc22',

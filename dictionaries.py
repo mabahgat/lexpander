@@ -69,18 +69,18 @@ class InvalidDictionaryName(ValueError):
     pass
 
 
-def get_dictionary_by_name(name: str, custom_path: str = None) -> Dictionary:
+def get_dictionary_by_name(name: str, custom_dictionary_path: str = None) -> Dictionary:
     """
     Gets a dictionary by name. This only works for specific predefined list of dictionaries
     :param name: name string
-    :param custom_path: custom path to use while loading that dictionary
+    :param custom_dictionary_path: custom path to use while loading that dictionary
     :return: An instance of dictionary if corresponding type is found
     """
     def get_instance(klass: Type[Dictionary]):
-        if custom_path is None:
+        if custom_dictionary_path is None:
             return klass()
         else:
-            return klass(file_path=custom_path)
+            return klass(file_path=custom_dictionary_path)
     if name == 'wiktionary':
         return get_instance(Wiktionary)
     elif name == 'ud' or name == 'urban_dictionary':

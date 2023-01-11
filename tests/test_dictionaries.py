@@ -7,14 +7,14 @@ from tests.utils import get_abs_file_path
 
 def test_get_dictionary_by_name():
     ud_path = get_abs_file_path(__file__, 'resources/dictionaries/ud.csv')
-    ud = get_dictionary_by_name('ud', custom_path=ud_path)
+    ud = get_dictionary_by_name('ud', custom_dictionary_path=ud_path)
     assert type(ud) is UrbanDictionary
 
-    ud2 = get_dictionary_by_name('urban_dictionary', custom_path=ud_path)
+    ud2 = get_dictionary_by_name('urban_dictionary', custom_dictionary_path=ud_path)
     assert type(ud2) is UrbanDictionary
 
     wk_path = get_abs_file_path(__file__, 'resources/dictionaries/wiktionary_raw.csv')
-    wk = get_dictionary_by_name('wiktionary', custom_path=wk_path)
+    wk = get_dictionary_by_name('wiktionary', custom_dictionary_path=wk_path)
     assert type(wk) is Wiktionary
 
     with pytest.raises(InvalidDictionaryName):

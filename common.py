@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Any
 
 import yaml
 
@@ -15,7 +15,7 @@ class ObjectWithConf(ABC):
     """
 
     @abstractmethod
-    def get_conf(self) -> Dict[str, object]:
+    def get_conf(self) -> Dict[str, Any]:
         """
         Gets the instance configuration with the parameters the instance was initialised with
         :return: Dictionary
