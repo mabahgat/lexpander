@@ -6,38 +6,60 @@ from lexicons import LookUpLexicon, LexiconFormatError, Liwc2015, LabelMapper, V
 from tests.utils import get_abs_file_path
 
 
-def test_get_lexicon_by_name_and_custom_path():
+def test_get_lexicon_liwc2015():
     liwc2015_path = __liwc2015_dic_path()
-    liwc2015 = get_lexicon('liwc2015', custom_lexicon_path=liwc2015_path)
+    liwc2015_params = {
+        'dic_path': liwc2015_path,
+        'strict_matching': False
+    }
+    liwc2015 = get_lexicon('liwc2015', **liwc2015_params)
+
     assert type(liwc2015) is Liwc2015
-    assert liwc2015.get_conf()['strict'] == True
+    assert liwc2015.get_conf()['file_path'] == str(liwc2015_path)
+    assert liwc2015.get_conf()['strict'] == False
 
+
+def test_get_lexicon_values():
     values_path = get_abs_file_path(__file__, 'resources/lexicons/test_values.csv')
-    values = get_lexicon('values', custom_lexicon_path=values_path)
+    values_params = {
+        'csv_path': values_path
+    }
+    values = get_lexicon('values', **values_params)
+
     assert type(values) is Values
+    assert values.get_conf()['file_path'] == str(values_path)
 
+
+def test_get_lexicon_liwc22():
     liwc22_path = get_abs_file_path(__file__, 'resources/lexicons/test_liwc22_lookup.csv')
-    liwc22 = get_lexicon('liwc22', custom_lexicon_path=liwc22_path)
+    liwc22_params = {
+        'csv_path': liwc22_path
+    }
+    liwc22 = get_lexicon('liwc22', **liwc22_params)
+
     assert type(liwc22) is Liwc22
+    assert liwc22.get_conf()['file_path'] == str(liwc22_path)
 
+
+def test_get_lexicon_custom():
     rand_lex_path = get_abs_file_path(__file__, 'resources/lexicons/rand_3_labels_150_examples.csv')
-    rand_lex = get_lexicon(custom_lexicon_path=rand_lex_path)
-    assert type(rand_lex) is LookUpLexicon
+    rand_params = {
+        'csv_path': rand_lex_path
+    }
+    rand_lex = get_lexicon(**rand_params)
 
+    assert type(rand_lex) is LookUpLexicon
+    assert rand_lex.get_conf()['file_path'] == str(rand_lex_path)
+
+
+def test_get_lexicon_invalid_name():
     with pytest.raises(InvalidLexiconName):
         get_lexicon('blah')
 
 
-def test_get_lexicon_by_path():
-    values_path = get_abs_file_path(__file__, 'resources/lexicons/test_values.csv')
-    lookup = get_lexicon(custom_lexicon_path=values_path)
-
-    assert type(lookup) is LookUpLexicon
-
-
-def test_get_lexicon_by_name_bad_arguments():
+def test_get_lexicon_bad_arguments():
     with pytest.raises(ValueError):
-        get_lexicon(name=None, custom_lexicon_path=None)
+        get_lexicon()
 
 
 def test_label_mapper():
@@ -90,18 +112,18 @@ def __liwc2015_dic_path():
 
 def test_liwc2015_config():
     dic_path = __liwc2015_dic_path()
-    liwc_strict = Liwc2015(dic_path=dic_path, strict_matching=True)
+    liwc_strict = Liwc2015(dic_path=dic_path, strict_matching=False)
     conf_strict = liwc_strict.get_conf()
 
-    assert conf_strict['file_path'] == dic_path
-    assert conf_strict['strict'] == True
+    assert conf_strict['file_path'] == str(dic_path)
+    assert conf_strict['strict'] == False
     assert conf_strict['labels'] == {'label1', 'label2', 'label3', 'label4', 'label5', 'label6'}
     assert conf_strict['label_count'] == 6
 
     liwc = Liwc2015(dic_path=dic_path)
     conf = liwc.get_conf()
 
-    assert conf['strict'] == False
+    assert conf['strict'] == True
     assert conf['name'] == 'liwc2015'
 
 
@@ -115,7 +137,7 @@ def test_liwc2015_strict():
 
 
 def test_liwc2015():
-    liwc = Liwc2015(dic_path=__liwc2015_dic_path())
+    liwc = Liwc2015(dic_path=__liwc2015_dic_path(), strict_matching=False)
 
     assert liwc.label_term('word1suffix') == []
     assert liwc.label_term('wild1') == ['label3', 'label5']
@@ -193,7 +215,7 @@ def test_liwc2022_from_csv():
     assert lexicon.label_term('Pies') == ['Physical', 'food']
     assert lexicon.label_term('minute') == ['quantity', 'time']
     assert lexicon.label_term('minutes') == []
-    assert conf['file_path'] == path
+    assert conf['file_path'] == str(path)
 
 
 def test_liwc2022_from_liwc_output():
@@ -205,7 +227,7 @@ def test_liwc2022_from_liwc_output():
     assert lexicon.label_term('Pies') == ['Physical', 'food']
     assert lexicon.label_term('swop') == []
     assert lexicon.label_term('Pieses') == []
-    assert conf['file_path'] == path
+    assert conf['file_path'] == str(path)
 
 
 def test_liwc22_only_labels():
@@ -220,4 +242,4 @@ def test_liwc22_only_labels():
     assert lexicon.label_term('book') == []
     assert lexicon.label_term('abusion') == ['Drives']
     assert lexicon.label_term('minutes') == []
-    assert conf['file_path'] == path
+    assert conf['file_path'] == str(path)

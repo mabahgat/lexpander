@@ -87,29 +87,23 @@ class Lexicon(ObjectWithConf):
         pass
 
 
-def get_lexicon(name: str = None, custom_lexicon_path: Path = None) -> Optional[Lexicon]:
+def get_lexicon(name: str = None, **kwargs) -> Optional[Lexicon]:
     """
     Gets a lexicon instance by name. This only works for a specific predefined list of lexicons
     :param name: name string
-    :param custom_lexicon_path: custom path to use while loading that lexicon
+    :param kwargs: parameters passed on to the lexicon initialization
     :return: An instance of lexicon if a corresponding type is found
     """
 
-    if name is None and custom_lexicon_path is None:
+    if name is None and len(kwargs) == 0:
         raise ValueError('Either name or lexicon path has to be specified. Both are None')
 
     def get_instance(klass: Type[Lexicon]):
-        if custom_lexicon_path is None:
-            return klass()
-        else:
-            return klass(csv_path=custom_lexicon_path)
+        return klass(**kwargs)
 
     if name is not None:
         if name == 'liwc2015':
-            if custom_lexicon_path is None:
-                return Liwc2015(strict_matching=True)
-            else:
-                return Liwc2015(strict_matching=True, dic_path=custom_lexicon_path)
+            return get_instance(Liwc2015)
         elif name == 'values':
             return get_instance(Values)
         elif name == 'liwc22':
@@ -117,7 +111,7 @@ def get_lexicon(name: str = None, custom_lexicon_path: Path = None) -> Optional[
         else:
             raise InvalidLexiconName(f'Invalid lexicon name "{name}"')
     else:
-        return LookUpLexicon(custom_lexicon_path)
+        return get_instance(LookUpLexicon)
 
 
 class LookUpLexicon(Lexicon):
@@ -125,8 +119,8 @@ class LookUpLexicon(Lexicon):
     Loads a lexicon based on exact match.
     """
 
-    def __init__(self, file_path: Path, sep: str = ','):
-        self._path = file_path
+    def __init__(self, csv_path: Path, sep: str = ','):
+        self._path = csv_path
         self._sep = sep
         self._lookup, self._labels = self.__load()
 
@@ -252,7 +246,7 @@ class Liwc2015(Lexicon):
                  use_labels: Set[str] = None,
                  label_map: Dict[str, str] = DEFAULT_LABELS_MAP,
                  dic_path: Path = None,
-                 strict_matching: bool = False):
+                 strict_matching: bool = True):
         self.__dic_path = dic_path if dic_path is not None else global_config.lexicons.liwc2015.dic
         self.__strict_matching = strict_matching
         self.__liwc = self.__load()
@@ -306,7 +300,7 @@ class LookUpLexiconWithMapping(LookUpLexicon):
                  use_labels: Set[str],
                  label_map: Dict[str, str],
                  csv_path: Path):
-        super().__init__(file_path=csv_path)
+        super().__init__(csv_path=csv_path)
         if use_labels is not None:
             self.__label_mapper = LabelMapper(use_labels=use_labels, label_map=label_map)
             self._labels = use_labels
@@ -527,7 +521,7 @@ class Liwc22(Lexicon):
         labels = self.get_labels()
         return {
             'name': 'liwc22',
-            'file_path': self.__csv_path,
+            'file_path': str(self.__csv_path),
             'labels': labels,
             'labels_count': len(labels),
             'from_tool_output': self.__from_tool_output
