@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from datasets.base import Dataset
-from models.transformers import BertClassifier
+from models.text_transformers import BertClassifier
 from models.utils import get_model_by_name, InvalidModelName
 
 
@@ -27,7 +27,12 @@ def test_get_model_by_name_or_none(tmp_path):
 	dataset_root_path.mkdir()
 	dataset = get_sample_dataset(dataset_root_path)
 
-	bert = get_model_by_name(name='bert', exp_name='test_exp', dataset=dataset)
+	params = {
+		'exp_name': 'text_exp',
+		'dataset': dataset
+	}
+
+	bert = get_model_by_name(name='bert', **params)
 	assert type(bert) == BertClassifier
 
 	with pytest.raises(InvalidModelName):

@@ -10,7 +10,7 @@ from common import ObjectWithConf
 from datasets.base import Dataset
 from dictionaries import Dictionary, ColumnNotFound
 from lexicons import Lexicon
-from lists import LookUpList, NamesLookUp, StopWordsLookUp
+from lists import LookUpList, NamesLookUp, StopWordsLookUp, FileLookUp
 
 
 class DatasetGenerator(ObjectWithConf):
@@ -35,7 +35,7 @@ class DatasetGenerator(ObjectWithConf):
 				 test_percentage: float = None,
 				 same_train_set: bool = False,
 				 quality_threshold: int = None,
-				 exclusions: List[LookUpList] = None,
+				 exclusions: List[Union[LookUpList, str, Path]] = None,
 				 overwrite_if_exists: bool = False,
 				 dataset_root_path: Path = None):
 		"""
@@ -70,11 +70,27 @@ class DatasetGenerator(ObjectWithConf):
 		self.__test_percentage = test_percentage
 		self.__same_train_set = same_train_set
 		self.__quality_threshold = quality_threshold
-		self.__exclusions = exclusions if exclusions is not None else [NamesLookUp(), StopWordsLookUp()]
+		self.__exclusions = DatasetGenerator.__get_exclusions(exclusions)
 		self.__overwrite_if_exists = overwrite_if_exists
 		self.__dataset_root_path = dataset_root_path
 
 		self.__random = Random(0)
+
+	@staticmethod
+	def __get_exclusions(exclusions: List[Union[LookUpList, str, Path]]) -> List[LookUpList]:
+		if exclusions is None:
+			return [NamesLookUp(), StopWordsLookUp()]
+		else:
+			def get_lookup_by_type(v):
+				if type(v) is LookUpList:
+					return v
+				elif type(v) is str:
+					return FileLookUp(Path(v))
+				elif type(v) is Path:
+					return FileLookUp(v)
+				else:
+					raise TypeError(f'Unexpected type for exclusion list "{type(v)}"')
+			return [get_lookup_by_type(v) for v in exclusions]
 
 	def generate(self) -> List[Dataset]:
 		labeled_dictionaries = [entries.sample(frac=1, random_state=0) for entries in self.__get_labeled_entries()]

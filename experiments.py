@@ -6,8 +6,9 @@ import pandas as pd
 
 from common import ObjectWithConf, list_sorted_names_in_dir
 from config import global_config, Config
+from datasets.base import Dataset
 from datasets.generators import DatasetGenerator
-from dictionaries import get_dictionary_by_name
+from dictionaries import get_dictionary
 from lexicons import get_lexicon
 from models.utils import get_model_by_name
 
@@ -39,22 +40,8 @@ class Experiment(ObjectWithConf):
 
 	def __init__(self, conf: Dict[str, object] = None, conf_path: Path = None):
 		"""
-
-		:param conf: dictionary with experiment configuration with the following:
-			exp_name:
-			experiment_root_path*:
-			lexicon:
-				name:
-				path*:
-			dictionaries:
-				- name:
-				  path*:
-				- name:
-				  path*:
-			model:
-				name:
-				custom_root_path:
-		* Optional parameters
+		Gets an instance of experiment object
+		:param conf: dictionary with experiment configuration
 		:param conf_path: Path containing experiment configuration
 		"""
 		if conf is None and conf_path is None:
@@ -68,6 +55,9 @@ class Experiment(ObjectWithConf):
 		self.__exp_name = self.__conf.exp_name
 		self.__experiments_root_paths = Path(self.__conf.experiments_root_path) \
 			if 'experiments_root_path' in self.__conf else get_experiments_root_path()
+
+		self._expanded_output_path = Path(self.__conf.expanded_output_path) \
+			if 'expanded_output_path' in self.__conf else None
 
 		if self.__exists():
 			self.__load()
@@ -89,8 +79,7 @@ class Experiment(ObjectWithConf):
 
 	def run(self):
 		self.__lexicon = self.__get_lexicon()
-		self.__logger.info(f'Using lexicon with name "{self.__lexicon.get_conf()["name"]}" and '
-						   f'path "{self.__lexicon.get_conf()["file_path"]}"')
+		self.__logger.info(f'Using lexicon with configuration "{self.__lexicon.get_conf()}"')
 
 		self.__dictionaries = self.__get_dictionaries()
 		self.__logger.info(f'Using {len(self.__dictionaries)} dictionaries with names: '
@@ -124,16 +113,17 @@ class Experiment(ObjectWithConf):
 		return self.__labeled_dictionary_dfs
 
 	def __get_lexicon(self):
-		lexicon_conf = self.__conf.lexicon
-		name = None if 'name' not in lexicon_conf else lexicon_conf.name
-		path = None if 'path' not in lexicon_conf else Path(lexicon_conf.path)
-		return get_lexicon(name=name, custom_lexicon_path=path)
+		name = None if 'name' not in self.__conf.lexicon else self.__conf.lexicon.name
+		params = self.__conf.lexicon.to_dict().copy()
+		params.pop('name', None)
+		return get_lexicon(name=name, **params)
 
 	def __get_dictionaries(self):
-		def get_dictionary(dict_conf):
-			custom_path = Path(dict_conf.path) if 'path' in dict_conf else None
-			return get_dictionary_by_name(name=dict_conf.name, custom_dictionary_path=custom_path)
-		return [get_dictionary(conf) for conf in self.__conf.dictionaries]
+		def get_dictionary_from_conf(conf_dict):
+			params = conf_dict.copy()
+			name = params.pop('name')
+			return get_dictionary(name=name, **params)
+		return [get_dictionary_from_conf(conf_dict) for conf_dict in self.__conf.dictionaries]  # because .dictionaries is an array objects are dict not Config
 
 	def __get_datasets(self):
 		dataset_conf = self.__conf.dataset
@@ -141,6 +131,7 @@ class Experiment(ObjectWithConf):
 		force_test_count = dataset_conf.force_test_count if 'force_test_count' in dataset_conf else True
 		same_train_set = dataset_conf.same_train_set if 'same_train_set' in dataset_conf else False
 		custom_root_path = Path(dataset_conf.custom_root_path) if 'custom_root_path' in dataset_conf else None
+		exclusions = dataset_conf.exclusions if 'exclusions' in dataset_conf else None
 
 		generator = DatasetGenerator(exp_name=self.__exp_name,
 									 lexicon=self.__lexicon,
@@ -148,36 +139,46 @@ class Experiment(ObjectWithConf):
 									 test_count=dataset_conf.test_count,
 									 force_test_count=force_test_count,
 									 same_train_set=same_train_set,
+									 exclusions=exclusions,
 									 dataset_root_path=custom_root_path)
 
 		return generator.generate()
 
 	def __get_models(self):
-		model_conf = self.__conf.model
+		name = self.__conf.model.name
+		model_params = self.__conf.model.to_dict().copy()
+		if 'exp_name' not in model_params:
+			model_params['exp_name'] = self.__exp_name
+		model_params.pop('name')
 
-		custom_root_path = Path(model_conf.custom_root_path) if 'custom_root_path' in model_conf else None
-
-		return [get_model_by_name(name=model_conf.name,
-								  exp_name=f'{self.__exp_name}__{d.get_conf()["name"]}',
-								  dataset=d,
-								  models_root_path=custom_root_path) for d in self.__datasets]
+		def get_model_for_dataset(dataset: Dataset):
+			params = dict(model_params)
+			params['dataset'] = dataset
+			return get_model_by_name(name=name, **params)
+		return [get_model_for_dataset(d) for d in self.__datasets]
 
 	def __get_results(self):
-		return [m.train_and_evaluate() for m in self.__models]
+		return [m.train_and_eval() for m in self.__models]
 
 	def __get_output(self) -> List[pd.DataFrame]:
 		return [model.apply(dictionary) for model, dictionary in zip(self.__models, self.__dictionaries)]
 
+	def __get_default_expanded_output_path(self) -> Path:
+		return Path(global_config.storage.root) / global_config.storage.expand_out / self.__exp_name
+
 	def __store_output(self) -> Path:
-		output_path = Path(global_config.storage.root) / global_config.storage.expand_out / self.__exp_name
-		output_path.mkdir()
+		output_path = self._expanded_output_path \
+			if self._expanded_output_path is not None else self.__get_default_expanded_output_path()
+		output_path.mkdir(parents=True)
 		for df, dictionary in zip(self.__labeled_dictionary_dfs, self.__dictionaries):
 			file_path = output_path / f'{dictionary.get_conf()["name"]}.csv'
 			df.to_csv(file_path)
 		return output_path
 
 	def __get_conf_path(self):
-		return self.__experiments_root_paths / self.__exp_name / f'{self.__exp_name}__conf.yaml'
+		exp_path = self.__experiments_root_paths / self.__exp_name
+		exp_path.mkdir(parents=True)
+		return exp_path / f'{self.__exp_name}__conf.yaml'
 
 	def get_conf(self) -> Dict[str, Any]:
 		return self.__config_dict

@@ -65,28 +65,23 @@ class ColumnNotFound(ValueError):
     pass
 
 
-class InvalidDictionaryName(ValueError):
-    pass
-
-
-def get_dictionary_by_name(name: str, custom_dictionary_path: str = None) -> Dictionary:
+def get_dictionary(name: str, **kwargs) -> Dictionary:
     """
     Gets a dictionary by name. This only works for specific predefined list of dictionaries
     :param name: name string
-    :param custom_dictionary_path: custom path to use while loading that dictionary
+    :param kwargs: parameters passed on to dictionary initialization
     :return: An instance of dictionary if corresponding type is found
     """
     def get_instance(klass: Type[Dictionary]):
-        if custom_dictionary_path is None:
-            return klass()
-        else:
-            return klass(file_path=custom_dictionary_path)
+        return klass(**kwargs)
     if name == 'wiktionary':
         return get_instance(Wiktionary)
     elif name == 'ud' or name == 'urban_dictionary':
         return get_instance(UrbanDictionary)
     else:
-        raise InvalidDictionaryName(f'Invalid dictionary name "{name}"')
+        params = kwargs.copy()
+        params['name'] = name
+        return SimpleDictionary(**params)
 
 
 class DictionaryWithTwoFormats(Dictionary):

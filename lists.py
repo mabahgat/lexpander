@@ -1,4 +1,6 @@
 from abc import ABC
+from pathlib import Path
+
 from nltk.corpus import stopwords
 import nltk
 
@@ -17,7 +19,7 @@ class LookUpList(ObjectWithConf, ABC):
 
 class FileLookUp(LookUpList):
 
-    def __init__(self, path: str):
+    def __init__(self, path: Path):
         super().__init__()
         self.__list_path = path
         self._lookup = self.__load()
@@ -33,7 +35,7 @@ class FileLookUp(LookUpList):
 
     def get_conf(self):
         return {
-            'file_path': self.__list_path,
+            'file_path': str(self.__list_path),
             'count': len(self._lookup),
             'case_sensitive': False
         }
@@ -41,7 +43,7 @@ class FileLookUp(LookUpList):
 
 class NamesLookUp(FileLookUp):
 
-    def __init__(self, path: str = None):
+    def __init__(self, path: Path = None):
         list_path = path if path is not None else global_config.lists.names.lst
         super().__init__(path=list_path)
 
