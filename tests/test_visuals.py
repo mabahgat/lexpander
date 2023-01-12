@@ -1,7 +1,9 @@
+import numpy as np
 import pandas as pd
 import pytest
 
-from visuals import get_precision_recall_at, plot_precision_recall_curve
+from visuals import get_precision_recall_at, plot_precision_recall_curve, __get_thresholds_list, \
+	plot_counts_vs_threshold
 
 
 def test_get_precision_recall_at():
@@ -42,6 +44,14 @@ def test_get_precision_recall_at():
 	assert r == 0.75
 
 
+def test_get_threshold_list():
+	thr_lst = __get_thresholds_list()
+
+	assert np.amin(thr_lst) == 0
+	assert np.amax(thr_lst) == 1
+	assert len(thr_lst) == 101
+
+
 def test_plot_precision_recall_curve():
 	data = {
 		'word': ['word1', 'word2', 'word3', 'word4'],
@@ -58,3 +68,19 @@ def test_plot_precision_recall_curve():
 	assert ax.get_title() == 'curve'
 	assert ax.get_xlim() == (0, 1)
 	assert ax.get_ylim() == (0, 1)
+
+
+def test_plot_counts_vs_threshold():
+	data = {
+		'word': ['word1', 'word2', 'word3', 'word4'],
+		'label': ['label1', 'label2', 'label3', 'label4'],
+		'label_out': ['label1', 'label2', 'label3', 'label4'],
+		'prob_out': [0.1, 0.4, 0.7, 0.9]
+	}
+	df = pd.DataFrame.from_dict(data)
+	counts = plot_counts_vs_threshold(df)
+
+	thr_count_dict = {thr: count for thr, count in zip(counts['threshold'], counts['count'])}
+	assert thr_count_dict[0] == 4
+	assert thr_count_dict[0.5] == 2
+	assert thr_count_dict[1] == 0
