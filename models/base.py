@@ -137,6 +137,14 @@ class Model(ObjectWithConf, ABC):
 		return conf
 
 	@abstractmethod
+	def get_test_labeled(self) -> pd.DataFrame:
+		"""
+		Returns the test set with model generated labels and probabilities
+		:return: Dataframe
+		"""
+		pass
+
+	@abstractmethod
 	def apply(self, dictionary: Dictionary) -> pd.DataFrame:
 		"""
 		Apply a trained model on a dictionary

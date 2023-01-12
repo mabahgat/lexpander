@@ -158,9 +158,7 @@ class BertClassifier(Model):
 		return self.__model_path() / f'{self._exp_name}__test_out.csv'
 
 	def __save_test_labels(self):
-		test_df = self._test_df.copy(deep=True)
-		test_df[Model.LABEL_OUT_COLUMN] = self.__cached_test_labels
-		test_df[Model.PROB_OUT_COLUMN] = self.__cached_test_label_probs
+		test_df = self.get_test_labeled()
 		test_df.to_csv(self.__get_test_results_path())
 
 	def _load(self):
@@ -187,6 +185,14 @@ class BertClassifier(Model):
 		weights_file_path = self.__model_path() / 'tf_model.h5'
 		model.load_weights(weights_file_path)
 		return model
+
+	def get_test_labeled(self) -> pd.DataFrame:
+		if self.__cached_test_labels is None or self.__cached_test_label_probs is None:
+			self._eval()
+		test_df = self._test_df.copy(deep=True)
+		test_df[Model.LABEL_OUT_COLUMN] = self.__cached_test_labels
+		test_df[Model.PROB_OUT_COLUMN] = self.__cached_test_label_probs
+		return test_df
 
 	def apply(self, dictionary: Dictionary) -> pd.DataFrame:
 		df = dictionary.get_all_records()

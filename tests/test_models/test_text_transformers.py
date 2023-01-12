@@ -42,6 +42,11 @@ def test_bert_classifier(tmp_path):
 	assert 'report' in results
 	assert type(results['report']) is dict
 
+	test_df = model.get_test_labeled()
+
+	assert 'label_out' in test_df
+	assert 'prob_out' in test_df
+
 	conf = model.get_conf()
 
 	assert conf['epochs'] == 1
