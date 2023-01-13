@@ -30,6 +30,14 @@ class Config:
     def __getitem__(self, key):
         return self.__getattribute__(key)
 
+    def __setattr__(self, key, value):
+        if key == '_config_dict':
+            return super().__setattr__(key, value)
+        self._config_dict[key] = value
+
+    def __setitem__(self, key, value):
+        return self.__setattr__(key, value)
+
     def __contains__(self, item):
         return item in self._config_dict
 
