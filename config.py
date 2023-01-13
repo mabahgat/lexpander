@@ -1,3 +1,5 @@
+from typing import Iterable
+
 import yaml
 import pathlib
 
@@ -42,7 +44,21 @@ class Config:
         return item in self._config_dict
 
     def to_dict(self):
-        return self._config_dict
+        return self._config_dict.copy()
+
+    def to_primitives_dict(self):
+        def to_primitive(value):
+            if type(value) in (int, float, str, bool, None):
+                return value
+            elif type(value) is dict:
+                return {k: to_primitive(v) for k, v in value.items()}
+            elif isinstance(value, Iterable):
+                return type(value)([to_primitive(i) for i in value])
+            else:
+                return str(value)
+        p_dict = self.to_dict()
+        return to_primitive(p_dict)
+
 
 
 global_config = load_config()

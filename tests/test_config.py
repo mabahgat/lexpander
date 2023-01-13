@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from config import Config, load_config
 from tests.utils import get_abs_file_path
 
@@ -99,3 +101,35 @@ def test_set_value():
     assert config.param3 == 'value3'
     assert config.to_dict()['param2'] == 'value2'
     assert config.to_dict()['param3'] == 'value3'
+
+
+def test_config_to_primitives_dict():
+    dict_data = {
+        'param1': Path('value1'),
+        'param2': {
+            'param2_1': Path('value2_1')
+        },
+        'param3': [
+            Path('value3_1'),
+            {
+                'param3_2': Path('value3_2')
+            }
+        ],
+        'param4': 'value4',
+        'param5': 0,
+        'param6': 6.0,
+        'param7': (0, 1),
+        'param8': {0, 1}
+    }
+    config = Config(dict_data)
+
+    config_primitive = config.to_primitives_dict()
+    assert config_primitive['param1'] == 'value1'
+    assert config_primitive['param2']['param2_1'] == 'value2_1'
+    assert config_primitive['param3'][0] == 'value3_1'
+    assert config_primitive['param3'][1]['param3_2'] == 'value3_2'
+    assert config_primitive['param4'] == 'value4'
+    assert config_primitive['param5'] == 0
+    assert config_primitive['param6'] == 6.0
+    assert config_primitive['param7'] == (0, 1)
+    assert config_primitive['param8'] == {0, 1}

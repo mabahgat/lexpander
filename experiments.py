@@ -187,4 +187,4 @@ class Experiment(ObjectWithConf):
 		return self.__models
 
 	def get_conf(self) -> Dict[str, Any]:
-		return self.__config_dict
+		return self.__conf.to_primitives_dict()
