@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from common import ObjectWithConf
 from datasets.base import Dataset
-from dictionaries import Dictionary, ColumnNotFound
+from dictionaries import Dictionary
 from lexicons import Lexicon
 from lists import LookUpList, NamesLookUp, StopWordsLookUp, FileLookUp
 
@@ -134,9 +134,7 @@ class DatasetGenerator(ObjectWithConf):
 
 		df = df[~df.word.progress_apply(contained_in_exclusions)]
 
-		if self.__quality_threshold is not None:
-			if Dictionary.QUALITY_COLUMN not in df:
-				raise ColumnNotFound('Quality column not found in dictionary')
+		if self.__quality_threshold is not None and Dictionary.QUALITY_COLUMN in df:
 			df = df[df.quality > self.__quality_threshold]
 		return df
 

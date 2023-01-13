@@ -137,6 +137,8 @@ class LookUpLexicon(Lexicon):
                 if len(parts) != 2:
                     raise LexiconFormatError('Unexpected entry in lexicon at line {}: "{}"'.format(line_index, line))
                 word, label = parts
+                word = word.lower()
+                label = label.lower()
                 if word not in lookup_dict:
                     lookup_dict[word] = []
                 lookup_dict[word].append(label)
@@ -377,8 +379,22 @@ class Values(LookUpLexiconWithMapping):
         'life': None
     }
 
+    DEFAULT_LABEL_SET = {
+        'life',
+        'parents',
+        'truth',
+        'religion',
+        'social',
+        'feeling-good',
+        'children',
+        'animals',
+        'learning',
+        'order',
+        'accepting-others'
+    }
+
     def __init__(self,
-                 use_labels: Set[str] = None,
+                 use_labels: Set[str] = DEFAULT_LABEL_SET,
                  label_map: Dict[str, str] = DEFAULT_LABEL_MAP,
                  csv_path: str = None):
         if csv_path is None:

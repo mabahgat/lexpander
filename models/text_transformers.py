@@ -57,8 +57,8 @@ class BertClassifier(Model):
 			self.__cached_test_label_probs = None
 
 	def __get_labels(self):
-		train_labels = self._train_df.label.to_list()
-		test_labels = self._test_df.label.to_list()
+		train_labels = set(self._train_df.label.to_list())
+		test_labels = set(self._test_df.label.to_list())
 
 		if len(set(train_labels) & set(test_labels)) != len(train_labels):
 			self._logger.warning(f'Labels in the training and testing are different.'

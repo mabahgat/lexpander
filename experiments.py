@@ -10,6 +10,7 @@ from datasets.base import Dataset
 from datasets.generators import DatasetGenerator
 from dictionaries import get_dictionary
 from lexicons import get_lexicon
+from models.base import Model
 from models.utils import get_model_by_name
 
 
@@ -106,7 +107,7 @@ class Experiment(ObjectWithConf):
 		self._save_conf(conf_path)
 		self.__logger.info(f'Saved experiment configuration at {conf_path}')
 
-	def get_results(self):
+	def get_results(self) -> List:
 		return self.__results
 
 	def get_labeled_dictionaries(self):
@@ -131,6 +132,7 @@ class Experiment(ObjectWithConf):
 		force_test_count = dataset_conf.force_test_count if 'force_test_count' in dataset_conf else True
 		same_train_set = dataset_conf.same_train_set if 'same_train_set' in dataset_conf else False
 		custom_root_path = Path(dataset_conf.custom_root_path) if 'custom_root_path' in dataset_conf else None
+		quality_threshold = dataset_conf.quality_threshold if 'quality_threshold' in dataset_conf else None
 		exclusions = dataset_conf.exclusions if 'exclusions' in dataset_conf else None
 
 		generator = DatasetGenerator(exp_name=self.__exp_name,
@@ -139,6 +141,7 @@ class Experiment(ObjectWithConf):
 									 test_count=dataset_conf.test_count,
 									 force_test_count=force_test_count,
 									 same_train_set=same_train_set,
+									 quality_threshold=quality_threshold,
 									 exclusions=exclusions,
 									 dataset_root_path=custom_root_path)
 
@@ -179,6 +182,9 @@ class Experiment(ObjectWithConf):
 		exp_path = self.__experiments_root_paths / self.__exp_name
 		exp_path.mkdir(parents=True)
 		return exp_path / f'{self.__exp_name}__conf.yaml'
+
+	def get_models(self) -> List[Model]:
+		return self.__models
 
 	def get_conf(self) -> Dict[str, Any]:
 		return self.__config_dict
