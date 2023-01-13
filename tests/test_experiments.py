@@ -40,14 +40,15 @@ def test_experiment_run_new_from_dict_by_name(tmp_path):
 			'exclusions': []
 		},
 		'experiments_root_path': exp_root_path,
-		'labeled_output_path': labeled_output_path
+		'labeled_output_path': labeled_output_path,
+		'do_label_dictionaries': True
 	}
 	exp = Experiment(exp_conf)
 	exp.run()
 	conf = exp.get_conf()
 
 	assert conf['exp_name'] == 'test_exp_by_name'
-	assert conf['lexicon']['csv_path'] == lexicon_path
+	assert conf['lexicon']['csv_path'] == str(lexicon_path)
 	assert len(conf['dictionaries']) == 2
 	assert conf['dictionaries'][0]['name'] == 'rand_3_labels_150_examples_1'
 	assert conf['model']['name'] == 'bert'
@@ -56,6 +57,17 @@ def test_experiment_run_new_from_dict_by_name(tmp_path):
 
 	assert (exp_root_path / 'test_exp_by_name' / 'test_exp_by_name__conf.yaml').exists()
 	assert len(list(labeled_output_path.glob('*'))) == 2
+
+	# Testing loading here given the setup time it takes
+
+	loaded_conf = {
+		'exp_name': 'test_exp_by_name',
+		'experiments_root_path': exp_root_path
+	}
+	loaded_exp = Experiment(loaded_conf)
+
+	assert len(loaded_exp.get_models()) == 2
+	assert len(loaded_exp.label_dictionaries()) == 2
 
 
 def test_experiment_run_new_from_dict_by_path(tmp_path):

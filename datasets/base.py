@@ -4,7 +4,7 @@ from typing import List, Tuple
 import pandas as pd
 
 from common import ObjectWithConf, list_sorted_names_in_dir
-from config import global_config
+from config import global_config, Config
 
 
 def get_datasets_root_path() -> Path:
@@ -47,7 +47,8 @@ class Dataset(ObjectWithConf):
         if name is None:
             raise ValueError('Dataset name can not be none')
         self._name = name
-        self._datasets_root_path = datasets_root_path if datasets_root_path is not None else get_datasets_root_path()
+        self._datasets_root_path = Path(datasets_root_path) \
+            if datasets_root_path is not None else get_datasets_root_path()
         self._root_path, self._train_path, self._valid_path, self._test_path = self.__generate_paths()
         if train_df is not None and test_df is not None:
             self._train_df = train_df
@@ -120,17 +121,17 @@ class Dataset(ObjectWithConf):
             return Dataset.__copy(pd.concat([self._train_df, self._valid_df, self._test_df]))
 
     def get_conf(self):
-        valid_path = str(self._valid_path) if self._valid_df is not None else None
+        valid_path = self._valid_path if self._valid_df is not None else None
         valid_count = len(self._valid_df) if self._valid_df is not None else None
-        return {
+        return Config({
             'name': self._name,
-            'root_path': str(self._root_path),
-            'train_path': str(self._train_path),
+            'root_path': self._root_path,
+            'train_path': self._train_path,
             'valid_path': valid_path,
-            'test_path': str(self._test_path),
+            'test_path': self._test_path,
             'train_count': len(self._train_df),
             'valid_count': valid_count,
             'test_count': len(self._test_df),
-            'source_file': str(self.__source_path),
-            'datasets_root_path': str(self._datasets_root_path)
-        }
+            'source_file': self.__source_path,
+            'datasets_root_path': self._datasets_root_path
+        }).to_primitives_dict()

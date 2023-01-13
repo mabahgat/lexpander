@@ -16,7 +16,7 @@ logging.basicConfig(level=global_config.logging)
 
 
 def get_models_root_path() -> Path:
-	return Path(global_config.storage.root) / global_config.storage.datasets_subdir
+	return Path(global_config.storage.root) / global_config.storage.models_subdir
 
 
 def list_model_names(models_root_path: Path = get_models_root_path()) -> List[str]:
@@ -122,10 +122,8 @@ class Model(ObjectWithConf, ABC):
 	@abstractmethod
 	def _load(self) -> Config:
 		conf = Config(self._load_conf(self._get_conf_path()))
+
 		self._type_name = conf.type_name
-		self._dataset = Dataset(conf.dataset.name, datasets_root_path=self._datasets_root_path)
-		self._train_df = self._dataset.get_train()
-		self._test_df = self._dataset.get_test()
 		self._overwrite_if_exists = conf.overwrite_if_exists
 		self._models_root_path = Path(conf.models_root_path) \
 			if conf.models_root_path is not None else get_models_root_path()
@@ -134,6 +132,11 @@ class Model(ObjectWithConf, ABC):
 		self._training_start_time = conf.training_start_time
 		self._creation_timestamp = conf.creation_timestamp
 		self._performance_result = conf.performance_result.to_dict()
+
+		self._dataset = Dataset(conf.dataset.name, datasets_root_path=self._datasets_root_path)
+		self._train_df = self._dataset.get_train()
+		self._test_df = self._dataset.get_test()
+
 		return conf
 
 	@abstractmethod

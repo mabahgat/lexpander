@@ -50,15 +50,22 @@ class Experiment(ObjectWithConf):
 		if conf is not None and conf_path is not None:
 			raise ValueError('Both configuration dictionary and configuration path can not be specified together')
 
-		self.__config_dict = ObjectWithConf._load_conf(conf_path) if conf_path is not None else conf
-		self.__conf = Config(self.__config_dict)
+		self.__logger = logging.getLogger(__name__)
 
+		config_dict = ObjectWithConf._load_conf(conf_path) if conf_path is not None else conf
+		self.__conf = Config(config_dict)
+
+		# Reminder: Any new parameters need to be added to both constructor and __load
 		self.__exp_name = self.__conf.exp_name
 		self.__experiments_root_paths = Path(self.__conf.experiments_root_path) \
 			if 'experiments_root_path' in self.__conf else get_experiments_root_path()
 
+		self.__do_label_dictionaries = self.__conf.do_label_dictionaries \
+			if 'do_label_dictionaries' in self.__conf else False  # default False: it takes hours to label a dictionary
 		self._labeled_output_path = Path(self.__conf.labeled_output_path) \
 			if 'labeled_output_path' in self.__conf else None
+		self.__overwrite_if_exists = self.__conf.overwrite_if_exists \
+			if 'overwrite_if_exists' in self.__conf else False
 
 		if self.__exists():
 			self.__load()
@@ -70,21 +77,51 @@ class Experiment(ObjectWithConf):
 			self.__results = None
 			self.__labeled_dictionary_dfs = None
 
-		self.__logger = logging.getLogger(__name__)
-
 	def __exists(self):
 		return self.__exp_name in list_experiment_names(self.__experiments_root_paths)
 
 	def __load(self):
-		raise NotImplementedError()
+		self.__logger.info(f'Loading experiment {self.__exp_name}')
+		self.__conf = Config(ObjectWithConf._load_conf(self.__get_conf_path()))  # has results extra, rest is identical
+
+		self.__logger.info('Loading lexicon')
+		self.__lexicon = self.__get_lexicon()
+		self.__logger.info(f'Lexicon {type(self.__lexicon)} loaded')
+
+		self.__logger.info('Loading dictionaries')
+		self.__dictionaries = self.__get_dictionaries()
+		self.__logger.info(
+			f'Loaded {len(self.__dictionaries)} '
+			f'dictionaries: {[d.get_conf()["name"] for d in self.__dictionaries]}')
+
+		self.__logger.info('Loading datasets')
+		self.__datasets = self.__load_datasets()
+		self.__logger.info(f'Loaded {len(self.__datasets)} datasets')
+
+		self.__logger.info('Loading models')
+		self.__models = self.__get_models()
+		self.__logger.info(
+			f'Loaded {len(self.__models)} '
+			f'models: {[m.get_conf()["exp_name"] for m in self.__models]}')
+
+		if 'results' in self.__conf:
+			self.__logger.info(f'Loaded experiments has results')
+			self.__results = self.__conf.results
+
+		if 'labeled_dictionary_paths' in self.__conf:
+			labeled_dict_paths = self.__conf.labeled_dictionary_paths
+			self.__logger.info(f'Loading labeled dictionaries {len(labeled_dict_paths)}')
+			self.__labeled_dictionary_dfs = [pd.read_csv(path, index_col=0) for path in labeled_dict_paths]
+			self.__logger.info(f'Loaded labeled dictionaries')
 
 	def run(self):
 		self.__lexicon = self.__get_lexicon()
 		self.__logger.info(f'Using lexicon with configuration "{self.__lexicon.get_conf()}"')
 
 		self.__dictionaries = self.__get_dictionaries()
-		self.__logger.info(f'Using {len(self.__dictionaries)} dictionaries with names: '
-						   f'{[d.get_conf()["name"] for d in self.__dictionaries]}')
+		self.__logger.info(
+			f'Using {len(self.__dictionaries)} dictionaries with names: '
+			f'{[d.get_conf()["name"] for d in self.__dictionaries]}')
 
 		self.__logger.info(f'Generating datasets for {len(self.__dictionaries)} dictionaries')
 		self.__datasets = self.__get_datasets()
@@ -94,14 +131,12 @@ class Experiment(ObjectWithConf):
 
 		self.__logger.info(f'Training and Evaluating models')
 		self.__results = self.__get_results()
-		self.__config_dict['results'] = self.__results
+		self.__conf.results = self.__results
 
-		self.__logger.info('Labeling dictionaries')
-		self.__labeled_dictionary_dfs = self.__get_output()
-
-		self.__logger.info('Storing labeled dictionaries')
-		output_path = self.__store_output()
-		self.__logger.info(f'Labeled dictionaries saved at {output_path}')
+		if self.__do_label_dictionaries:
+			self.label_dictionaries()
+		else:
+			self.__logger.info('Skipping labeling dictionaries')
 
 		conf_path = self.__get_conf_path()
 		self._save_conf(conf_path)
@@ -109,6 +144,18 @@ class Experiment(ObjectWithConf):
 
 	def get_results(self) -> List:
 		return self.__results
+
+	def label_dictionaries(self) -> List[pd.DataFrame]:
+		if self.__labeled_dictionary_dfs is None:
+			self.__logger.info('Labeling dictionaries')
+			self.__labeled_dictionary_dfs = self.__get_output()
+
+			self.__logger.info('Storing labeled dictionaries')
+			output_paths = self.__store_output()
+			self.__conf['labeled_dictionary_paths'] = output_paths
+			self.__logger.info(f'Labeled dictionaries saved at {output_paths[0].parents}')
+
+		return self.get_labeled_dictionaries()
 
 	def get_labeled_dictionaries(self):
 		return self.__labeled_dictionary_dfs
@@ -147,6 +194,10 @@ class Experiment(ObjectWithConf):
 
 		return generator.generate()
 
+	def __load_datasets(self) -> List[Dataset]:
+		datasets_conf = self.__conf.datasets
+		return [Dataset(name=conf.name, datasets_root_path=conf.datasets_root_path) for conf in datasets_conf]
+
 	def __get_models(self):
 		name = self.__conf.model.name
 		model_params = self.__conf.model.to_dict().copy()
@@ -169,22 +220,25 @@ class Experiment(ObjectWithConf):
 	def __get_default_labeled_output_path(self) -> Path:
 		return Path(global_config.storage.root) / global_config.storage.expand_out / self.__exp_name
 
-	def __store_output(self) -> Path:
+	def __store_output(self) -> List[Path]:
 		output_path = self._labeled_output_path \
 			if self._labeled_output_path is not None else self.__get_default_labeled_output_path()
-		output_path.mkdir(parents=True)
+		output_path.mkdir(parents=True, exist_ok=self.__overwrite_if_exists)
+		labeled_dictionary_paths = []
 		for df, dictionary in zip(self.__labeled_dictionary_dfs, self.__dictionaries):
 			file_path = output_path / f'{dictionary.get_conf()["name"]}.csv'
 			df.to_csv(file_path)
-		return output_path
+			labeled_dictionary_paths.append(file_path)
+		return labeled_dictionary_paths
 
 	def __get_conf_path(self):
 		exp_path = self.__experiments_root_paths / self.__exp_name
-		exp_path.mkdir(parents=True)
+		exp_path.mkdir(parents=True, exist_ok=True)
 		return exp_path / f'{self.__exp_name}__conf.yaml'
 
 	def get_models(self) -> List[Model]:
 		return self.__models
 
 	def get_conf(self) -> Dict[str, Any]:
+		self.__conf.datasets = [d.get_conf() for d in self.__datasets]
 		return self.__conf.to_primitives_dict()

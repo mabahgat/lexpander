@@ -36,6 +36,8 @@ class BertClassifier(Model):
 		:param models_root_path: Optional override for where models are stored
 		"""
 		model_type = f'{TFBertForSequenceClassification.__name__}__{pretrained_model_name}'
+		models_root_path = Path(models_root_path) if models_root_path is not None else None
+		dataset_root_path = Path(dataset_root_path) if dataset_root_path is not None else None
 		super().__init__(exp_name=exp_name,
 						 type_name=model_type,
 						 dataset=dataset,
