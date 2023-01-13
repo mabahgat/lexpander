@@ -67,3 +67,21 @@ def test_to_dict():
     assert type(config) is Config
     assert type(config.to_dict()) is dict
     assert type(config.param3.to_dict()) is dict
+
+
+def test_config_with_list():
+    dict_data = {
+        'param1': [
+            'value1',
+            {
+                'param1_1': 'value1_1',
+                'param2_1': 'value2_1'
+            }
+        ]
+    }
+    config = Config(dict_data)
+
+    assert type(config.param1[0]) is str
+    assert type(config.param1[1]) is Config
+    assert config.param1[0] == 'value1'
+    assert config.param1[1].param2_1 == 'value2_1'

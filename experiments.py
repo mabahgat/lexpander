@@ -123,7 +123,7 @@ class Experiment(ObjectWithConf):
 			params = conf_dict.copy()
 			name = params.pop('name')
 			return get_dictionary(name=name, **params)
-		return [get_dictionary_from_conf(conf_dict) for conf_dict in self.__conf.dictionaries]  # because .dictionaries is an array objects are dict not Config
+		return [get_dictionary_from_conf(conf.to_dict()) for conf in self.__conf.dictionaries]
 
 	def __get_datasets(self):
 		dataset_conf = self.__conf.dataset

@@ -22,7 +22,10 @@ class Config:
         value = self._config_dict[key]
         if isinstance(value, dict):
             return Config(value)
-        return value
+        elif isinstance(value, list):
+            return [Config(item) if isinstance(item, dict) else item for item in value]
+        else:
+            return value
 
     def __getitem__(self, key):
         return self.__getattribute__(key)
