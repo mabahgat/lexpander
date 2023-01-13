@@ -1,10 +1,30 @@
-version: # version
+version: 0.1
+storage:
+  root: 
+  experiments: exps/ # Experiments root contains a list of definition files for each
+  datasets_subdir: datasets/ # root for train
+  models_subdir: models/ # root for trained models
+  expand_out: expand_out/ # Expansion output
+logging: NOTSET
 
 lexicons:
   liwc2015:
-    dic: # liwc 2015 dic format file
+    dic: 
   values:
-    csv: # csv file
+    csv: 
   liwc22:
-    tool_out: # liwc 22 output
-    csv: # csv file with pipe separating multiple labels
+    tool_out: 
+    csv: 
+
+lists:
+  names:
+    lst: 
+  stopwords:
+    lst:
+
+dictionaries:
+  ud:
+    csv: 
+    raw: 
+  wiktionary:
+    csv: 
