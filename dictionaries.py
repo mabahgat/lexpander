@@ -98,23 +98,22 @@ class DictionaryWithTwoFormats(Dictionary):
                  name: str,
                  file_type: str = _CSV_FILE_TYPE,
                  file_path: str = None):
+        if file_type not in [DictionaryWithTwoFormats._RAW_FILE_TYPE, DictionaryWithTwoFormats._CSV_FILE_TYPE]:
+            raise BadFileType(f'Unknown file type "{file_type}"')
+
         self._file_type = file_type
         if file_path is None:
-            file_path = self._use_default_path(self._file_type)
+            file_path = self._use_default_path(name, file_type)
         super().__init__(name, file_path)
 
-    def _use_default_path(self, dict_conf_name: str):
+    def _use_default_path(self, dict_name: str, file_type: str):
         """
         Returns the default path for a dictionary
-        :param dict_conf_name: Name string as in the yaml configuration file
+        :param dict_name: Name string as in the yaml configuration file
+        :param file_type: type name string
         :return:
         """
-        if self._file_type == DictionaryWithTwoFormats._RAW_FILE_TYPE:
-            return global_config.dictionaries[dict_conf_name].csv
-        elif self._file_type == DictionaryWithTwoFormats._CSV_FILE_TYPE:
-            return global_config.dictionaries[dict_conf_name].raw
-        else:
-            raise BadFileType('Unknown file type "{}"'.format(self._file_type))
+        return global_config.dictionaries[dict_name][file_type]
 
     def _load(self) -> pd.DataFrame:
         if self._file_type == DictionaryWithTwoFormats._RAW_FILE_TYPE:
@@ -147,7 +146,7 @@ class UrbanDictionary(DictionaryWithTwoFormats):
     """
 
     def __init__(self, file_path: str = None, file_type: str = 'csv'):
-        super().__init__(name='UrbanDictionary', file_type=file_type, file_path=file_path)
+        super().__init__(name='urbandictionary', file_type=file_type, file_path=file_path)
 
     def _load_raw(self) -> pd.DataFrame:
         df = pd.read_csv(self._file_path, sep=r'\|')
@@ -188,7 +187,7 @@ class UrbanDictionary(DictionaryWithTwoFormats):
 class Wiktionary(DictionaryWithTwoFormats):
 
     def __init__(self, file_path: str = None, file_type: str = 'csv'):
-        super().__init__(name='Wiktionary', file_type=file_type, file_path=file_path)
+        super().__init__(name='wiktionary', file_type=file_type, file_path=file_path)
 
     def _load_raw(self) -> pd.DataFrame:
         df = pd.read_csv(self._file_path, index_col=0)

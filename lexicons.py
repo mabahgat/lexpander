@@ -120,7 +120,7 @@ class LookUpLexicon(Lexicon):
     """
 
     def __init__(self, csv_path: Path, sep: str = ','):
-        self._path = csv_path
+        self._path = Path(csv_path)
         self._sep = sep
         self._lookup, self._labels = self.__load()
 
