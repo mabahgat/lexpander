@@ -9,7 +9,7 @@ def test_experiment_run_new_from_dict_by_name(tmp_path):
 	exp_root_path = root_path / 'experiments'
 	models_path = root_path / 'models'
 	datasets_path = root_path / 'datasets'
-	expanded_output_path = root_path / 'out'
+	labeled_output_path = root_path / 'out'
 
 	lexicon_path = get_abs_file_path(__file__, 'resources/lexicons/rand_3_labels_150_examples.csv')
 
@@ -40,7 +40,7 @@ def test_experiment_run_new_from_dict_by_name(tmp_path):
 			'exclusions': []
 		},
 		'experiments_root_path': exp_root_path,
-		'expanded_output_path': expanded_output_path
+		'labeled_output_path': labeled_output_path
 	}
 	exp = Experiment(exp_conf)
 	exp.run()
@@ -55,7 +55,7 @@ def test_experiment_run_new_from_dict_by_name(tmp_path):
 	assert 'results' in conf
 
 	assert (exp_root_path / 'test_exp_by_name' / 'test_exp_by_name__conf.yaml').exists()
-	assert len(list(expanded_output_path.glob('*'))) == 2
+	assert len(list(labeled_output_path.glob('*'))) == 2
 
 
 def test_experiment_run_new_from_dict_by_path(tmp_path):
@@ -65,7 +65,7 @@ def test_experiment_run_new_from_dict_by_path(tmp_path):
 	conf_path = exp_root_path / 'test_exp_by_path__conf.yaml'
 	models_path = root_path / 'models'
 	datasets_path = root_path / 'datasets'
-	expanded_output_path = root_path / 'out'
+	labeled_output_path = root_path / 'out'
 
 	lexicon_path = get_abs_file_path(__file__, 'resources/lexicons/rand_3_labels_150_examples.csv')
 
@@ -96,7 +96,7 @@ def test_experiment_run_new_from_dict_by_path(tmp_path):
 			'exclusions': []
 		},
 		'experiments_root_path': str(exp_root_path),
-		'expanded_output_path': str(expanded_output_path)
+		'labeled_output_path': str(labeled_output_path)
 	}
 
 	with open(conf_path, mode='w') as conf_file:

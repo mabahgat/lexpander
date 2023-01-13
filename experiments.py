@@ -57,8 +57,8 @@ class Experiment(ObjectWithConf):
 		self.__experiments_root_paths = Path(self.__conf.experiments_root_path) \
 			if 'experiments_root_path' in self.__conf else get_experiments_root_path()
 
-		self._expanded_output_path = Path(self.__conf.expanded_output_path) \
-			if 'expanded_output_path' in self.__conf else None
+		self._labeled_output_path = Path(self.__conf.labeled_output_path) \
+			if 'labeled_output_path' in self.__conf else None
 
 		if self.__exists():
 			self.__load()
@@ -166,12 +166,12 @@ class Experiment(ObjectWithConf):
 	def __get_output(self) -> List[pd.DataFrame]:
 		return [model.apply(dictionary) for model, dictionary in zip(self.__models, self.__dictionaries)]
 
-	def __get_default_expanded_output_path(self) -> Path:
+	def __get_default_labeled_output_path(self) -> Path:
 		return Path(global_config.storage.root) / global_config.storage.expand_out / self.__exp_name
 
 	def __store_output(self) -> Path:
-		output_path = self._expanded_output_path \
-			if self._expanded_output_path is not None else self.__get_default_expanded_output_path()
+		output_path = self._labeled_output_path \
+			if self._labeled_output_path is not None else self.__get_default_labeled_output_path()
 		output_path.mkdir(parents=True)
 		for df, dictionary in zip(self.__labeled_dictionary_dfs, self.__dictionaries):
 			file_path = output_path / f'{dictionary.get_conf()["name"]}.csv'
