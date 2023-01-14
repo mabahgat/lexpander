@@ -8,8 +8,8 @@ from common import ObjectWithConf, list_sorted_names_in_dir
 from config import global_config, Config
 from datasets.base import Dataset
 from datasets.generators import DatasetGenerator
-from dictionaries import get_dictionary
-from lexicons import get_lexicon
+from dictionaries import get_dictionary, Dictionary
+from lexicons import get_lexicon, ExpandedLexicon
 from models.base import Model
 from models.utils import get_model_by_name
 
@@ -64,8 +64,13 @@ class Experiment(ObjectWithConf):
 			if 'do_label_dictionaries' in self.__conf else False  # default False: it takes hours to label a dictionary
 		self._labeled_output_path = Path(self.__conf.labeled_output_path) \
 			if 'labeled_output_path' in self.__conf else None
+		self.__expanded_root_path = Path(self.__conf.expanded_root_path) \
+			if 'expanded_root_path' in self.__conf else None
 		self.__overwrite_if_exists = self.__conf.overwrite_if_exists \
 			if 'overwrite_if_exists' in self.__conf else False
+
+		self.__label_prob_threshold = self.__conf.label_prob_threshold \
+			if 'label_prob_threshold' in self.__conf else 0
 
 		if self.__exists():
 			self.__load()
@@ -76,6 +81,7 @@ class Experiment(ObjectWithConf):
 			self.__models = None
 			self.__results = None
 			self.__labeled_dictionary_dfs = None
+			self.__expanded_lexicons = None
 
 	def __exists(self):
 		return self.__exp_name in list_experiment_names(self.__experiments_root_paths)
@@ -135,8 +141,10 @@ class Experiment(ObjectWithConf):
 
 		if self.__do_label_dictionaries:
 			self.label_dictionaries()
+			self.expand_lexicons()
 		else:
 			self.__logger.info('Skipping labeling dictionaries')
+			self.__logger.info('Skipping generating expanded lexicons')
 
 		conf_path = self.__get_conf_path()
 		self._save_conf(conf_path)
@@ -155,7 +163,32 @@ class Experiment(ObjectWithConf):
 			self.__conf['labeled_dictionary_paths'] = output_paths
 			self.__logger.info(f'Labeled dictionaries saved at {output_paths[0].parents}')
 
-		return self.get_labeled_dictionaries()
+		return self.__labeled_dictionary_dfs
+
+	def expand_lexicons(self) -> List[ExpandedLexicon]:
+		if self.__expanded_lexicons is None:
+			if self.__labeled_dictionary_dfs is None:
+				raise ValueError('Labeled Dictionaries not initialized')
+
+			self.__logger.info('Generating expanded lexicons')
+			dict_names = [d.get_conf()['name'] for d in self.__dictionaries]
+
+			def create_expanded_lexicon(name, df):
+				df = df[df.prob_out >= self.__label_prob_threshold]
+				df = df.set_index(Dictionary.WORD_COLUMN)
+				term_to_label = df.label_out.to_dict()
+				lex_name = f'{self.__exp_name}__{name}'
+				lex = ExpandedLexicon(exp_name=lex_name,
+									  term_to_label=term_to_label,
+									  source_lexicon=self.__lexicon,
+									  expanded_root_path=self.__expanded_root_path,
+									  overwrite_if_exists=self.__overwrite_if_exists)
+				save_path = lex.save()
+				self.__logger.info(f'Saved lexicon for {name} at {save_path}')
+			self.__expanded_lexicons = [create_expanded_lexicon(dict_name, labeled_df.copy())
+										for dict_name, labeled_df in zip(dict_names, self.__labeled_dictionary_dfs)]
+
+		return self.__expanded_lexicons
 
 	def get_labeled_dictionaries(self):
 		return self.__labeled_dictionary_dfs
@@ -218,7 +251,7 @@ class Experiment(ObjectWithConf):
 		return [model.apply(dictionary) for model, dictionary in zip(self.__models, self.__dictionaries)]
 
 	def __get_default_labeled_output_path(self) -> Path:
-		return Path(global_config.storage.root) / global_config.storage.expand_out / self.__exp_name
+		return Path(global_config.storage.root) / global_config.storage.labeled_out / self.__exp_name
 
 	def __store_output(self) -> List[Path]:
 		output_path = self._labeled_output_path \
@@ -238,6 +271,9 @@ class Experiment(ObjectWithConf):
 
 	def get_models(self) -> List[Model]:
 		return self.__models
+
+	def get_dictionaries(self) -> List[Dictionary]:
+		return self.__dictionaries
 
 	def get_conf(self) -> Dict[str, Any]:
 		self.__conf.datasets = [d.get_conf() for d in self.__datasets]

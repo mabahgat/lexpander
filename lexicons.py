@@ -5,7 +5,7 @@ from liwc import Liwc
 import pandas as pd
 
 from common import ObjectWithConf
-from config import global_config
+from config import global_config, Config
 
 
 class LexiconFormatError(ValueError):
@@ -542,3 +542,58 @@ class Liwc22(Lexicon):
             'labels_count': len(labels),
             'from_tool_output': self.__from_tool_output
         }
+
+
+class ExpandedLexicon(Lexicon):
+
+    def __init__(self,
+                 exp_name: str,
+                 term_to_label: Dict[str, str],
+                 source_lexicon: Lexicon,
+                 expanded_root_path: Path = None,
+                 overwrite_if_exists: bool = False):
+        self.__exp_name = exp_name
+        self.__source_lexicon = source_lexicon
+        self.__lookup = self.__generate_lookup(term_to_label)
+        self.__expanded_root_path = expanded_root_path \
+            if expanded_root_path is not None \
+            else Path(global_config.storage.root) / global_config.storage.labeled_out / self.__exp_name
+        self.__overwrite_if_exists = overwrite_if_exists
+
+    def __generate_lookup(self, term_to_label):
+        """
+        Generates a lookup for the new words only
+        :param term_to_label:
+        :return:
+        """
+        return {term: label for term, label in term_to_label.items()
+                if len(self.__source_lexicon.label_term(term)) == 0}
+
+    def label_term(self, term: str) -> List[str]:
+        if term in self.__lookup:
+            return [self.__lookup[term]]
+        else:
+            return self.__source_lexicon.label_term(term)
+
+    def get_labels(self) -> Set[str]:
+        return self.__source_lexicon.get_labels()
+
+    def save(self) -> Path:
+        file_path = self.__expanded_root_path / f'{self.__exp_name}__expanded_lex.csv'
+        if file_path.exists() and not self.__overwrite_if_exists:
+            raise FileExistsError(f'Path already exists {file_path}')
+
+        self.__expanded_root_path.mkdir(parents=True, exist_ok=True)  # might be multiple expansions per experiment
+
+        with open(file_path, mode='w', encoding='utf8') as out_file:
+            for term, label in self.__lookup.items():
+                print(f'{term},{label}', file=out_file)
+        return file_path
+
+    def get_conf(self) -> Dict[str, Any]:
+        return Config({
+            'exp_name': self.__exp_name,
+            'source_lexicon': self.__source_lexicon.get_conf(),
+            'new_terms_count': len(self.__lookup),
+            'out_root_path': self.__expanded_root_path
+        }).to_primitives_dict()

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 from lexicons import LookUpLexicon, LexiconFormatError, Liwc2015, LabelMapper, Values, LookUpLexiconWithMapping, Liwc22, \
-    get_lexicon, InvalidLexiconName
+    get_lexicon, InvalidLexiconName, ExpandedLexicon
 from tests.utils import get_abs_file_path
 
 
@@ -243,3 +243,53 @@ def test_liwc22_only_labels():
     assert lexicon.label_term('abusion') == ['Drives']
     assert lexicon.label_term('minutes') == []
     assert conf['file_path'] == str(path)
+
+
+def test_expanded_lexicon():
+    lex_path = get_abs_file_path(__file__, 'resources/lexicons/test_lookup_lexicon.csv')
+    lex = LookUpLexicon(lex_path)
+
+    new_lex = {
+        'play': 'verb',
+        'game': 'noun'
+    }
+    exp_lex = ExpandedLexicon('test_expanded', new_lex, lex)
+
+    assert exp_lex.label_term('play') == ['verb']
+    assert exp_lex.label_term('run') == ['verb']
+    assert exp_lex.label_term('blah') == []
+
+
+def test_expanded_lexicon_conf():
+    lex_path = get_abs_file_path(__file__, 'resources/lexicons/test_lookup_lexicon.csv')
+    lex = LookUpLexicon(lex_path)
+
+    new_lex = {
+        'play': 'verb',
+        'game': 'noun'
+    }
+    exp_lex = ExpandedLexicon('test_expanded', new_lex, lex)
+    exp_conf = exp_lex.get_conf()
+
+    assert exp_conf['new_terms_count'] == 2
+
+
+def test_expanded_lexicon_save(tmp_path):
+    out_path = tmp_path
+
+    lex_path = get_abs_file_path(__file__, 'resources/lexicons/test_lookup_lexicon.csv')
+    lex = LookUpLexicon(lex_path)
+
+    new_lex = {
+        'play': 'verb',
+        'game': 'noun'
+    }
+    exp_lex = ExpandedLexicon('test_expanded', new_lex, lex, out_path)
+    exp_lex.save()
+
+    csv_path = out_path / 'test_expanded__expanded_lex.csv'
+    loaded_lex = LookUpLexicon(csv_path)
+
+    assert loaded_lex.label_term('play') == ['verb']
+    assert loaded_lex.label_term('game') == ['noun']
+    assert loaded_lex.label_term('blah') == []

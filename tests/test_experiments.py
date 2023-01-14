@@ -10,6 +10,8 @@ def test_experiment_run_new_from_dict_by_name(tmp_path):
 	models_path = root_path / 'models'
 	datasets_path = root_path / 'datasets'
 	labeled_output_path = root_path / 'out'
+	expanded_root_path = root_path / 'expanded'
+	label_prob_threshold = 0
 
 	lexicon_path = get_abs_file_path(__file__, 'resources/lexicons/rand_3_labels_150_examples.csv')
 
@@ -41,6 +43,8 @@ def test_experiment_run_new_from_dict_by_name(tmp_path):
 		},
 		'experiments_root_path': exp_root_path,
 		'labeled_output_path': labeled_output_path,
+		'label_prob_threshold': label_prob_threshold,
+		'expanded_root_path': expanded_root_path,
 		'do_label_dictionaries': True
 	}
 	exp = Experiment(exp_conf)
@@ -57,6 +61,7 @@ def test_experiment_run_new_from_dict_by_name(tmp_path):
 
 	assert (exp_root_path / 'test_exp_by_name' / 'test_exp_by_name__conf.yaml').exists()
 	assert len(list(labeled_output_path.glob('*'))) == 2
+	assert len(list(expanded_root_path.glob('*'))) == 2
 
 	# Testing loading here given the setup time it takes
 
