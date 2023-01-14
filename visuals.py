@@ -79,29 +79,30 @@ def plot_precision_recall_curve(df: pd.DataFrame,
 	return ax
 
 
-def plot_label_counts(sr: pd.Series, plot_type: str = 'bar'):
+def plot_label_counts(sr: pd.Series, title: str = None, plot_type: str = 'bar'):
 	"""
 	Plots counts in the form of either bar or pie charts
 	:param sr: series containing values to count
+	:param title: plot title
 	:param plot_type: string either 'bar' or 'pie'
 	:return:
 	"""
 	counts = sr.value_counts()
 	if plot_type == 'bar':
-		counts.plot.bar()
+		counts.plot.bar(title=title)
 	elif plot_type == 'pie':
-		counts.plot.pie()
+		counts.plot.pie(title=title)
 	else:
 		raise ValueError(f'Unknown plot type "{plot_type}"')
 	return counts
 
 
-def plot_counts_vs_threshold(df: pd.DataFrame):
+def plot_counts_vs_threshold(df: pd.DataFrame, title: str = None):
 	thr_lst = __get_thresholds_list()
 	counts = [len(df[df.prob_out >= thr]) for thr in thr_lst]
 	thr_counts_dict = {
 		'threshold': thr_lst,
 		'count': counts
 	}
-	pd.DataFrame.from_dict(thr_counts_dict).set_index('threshold').plot()
+	pd.DataFrame.from_dict(thr_counts_dict).set_index('threshold').plot(title=title)
 	return thr_counts_dict
