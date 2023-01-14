@@ -22,3 +22,4 @@ model:
 dataset:
   test_count: 1000
   force_test_count: True
+  top_quality_count: 10

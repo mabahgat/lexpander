@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from random import Random
 from typing import List, Union, Dict, Set
@@ -34,6 +35,7 @@ class DatasetGenerator(ObjectWithConf):
 				 force_test_count: bool = False,
 				 test_percentage: float = None,
 				 same_train_set: bool = False,
+				 top_quality_count: int = None,
 				 quality_threshold: int = None,
 				 exclusions: List[Union[LookUpList, str, Path]] = None,
 				 overwrite_if_exists: bool = False,
@@ -49,6 +51,7 @@ class DatasetGenerator(ObjectWithConf):
 		more test instance will be added. Resulting test set will be slightly imbalanced
 		:param test_percentage: Alternative for test_count, float value for percentage
 		:param same_train_set: whether to use same terms or not
+		:param top_quality_count: Optional to select the top-n terms per word
 		:param quality_threshold: Optional threshold (inclusive) to discard instances with lower quality value
 		:param exclusions: List of lists of terms to be excluded from the dataset.
 			None will use the default list which excludes names and stopwords.
@@ -61,6 +64,8 @@ class DatasetGenerator(ObjectWithConf):
 		if test_count is not None and test_percentage is not None:
 			raise ValueError('Either test_count or test_percentage can be defined not both')
 
+		self.__logger = logging.getLogger(__name__)
+
 		self.__exp_name = exp_name
 		self.__lexicon = lexicon
 		self.__dictionaries = dictionaries if type(dictionaries) is list else [dictionaries]
@@ -69,6 +74,7 @@ class DatasetGenerator(ObjectWithConf):
 		self.__force_test_count = force_test_count
 		self.__test_percentage = test_percentage
 		self.__same_train_set = same_train_set
+		self.__top_quality_count = top_quality_count
 		self.__quality_threshold = quality_threshold
 		self.__exclusions = DatasetGenerator.__get_exclusions(exclusions)
 		self.__overwrite_if_exists = overwrite_if_exists
@@ -134,8 +140,13 @@ class DatasetGenerator(ObjectWithConf):
 
 		df = df[~df.word.progress_apply(contained_in_exclusions)]
 
+		if self.__top_quality_count is not None and Dictionary.QUALITY_COLUMN in df:
+			self.__logger.info(f'Selecting top {self.__top_quality_count} records for each term')
+			df = df.groupby(by=Dictionary.WORD_COLUMN, as_index=False).head(self.__top_quality_count)
+
 		if self.__quality_threshold is not None and Dictionary.QUALITY_COLUMN in df:
-			df = df[df.quality > self.__quality_threshold]
+			self.__logger.info(f'Filtering records with threshold {self.__quality_threshold} inclusive')
+			df = df[df.quality >= self.__quality_threshold]
 		return df
 
 	@staticmethod

@@ -235,6 +235,7 @@ class Experiment(ObjectWithConf):
 		force_test_count = dataset_conf.force_test_count if 'force_test_count' in dataset_conf else True
 		same_train_set = dataset_conf.same_train_set if 'same_train_set' in dataset_conf else False
 		custom_root_path = Path(dataset_conf.custom_root_path) if 'custom_root_path' in dataset_conf else None
+		top_quality_count = dataset_conf.top_quality_count if 'top_quality_count' in dataset_conf else None
 		quality_threshold = dataset_conf.quality_threshold if 'quality_threshold' in dataset_conf else None
 		exclusions = dataset_conf.exclusions if 'exclusions' in dataset_conf else None
 
@@ -244,6 +245,7 @@ class Experiment(ObjectWithConf):
 									 test_count=dataset_conf.test_count,
 									 force_test_count=force_test_count,
 									 same_train_set=same_train_set,
+									 top_quality_count=top_quality_count,
 									 quality_threshold=quality_threshold,
 									 exclusions=exclusions,
 									 dataset_root_path=custom_root_path)
@@ -259,14 +261,13 @@ class Experiment(ObjectWithConf):
 		model_params = self.__conf.model.to_dict().copy()
 
 		model_params.pop('name')
-		if 'exp_name' not in model_params:
-			model_params['exp_name'] = self.__exp_name
 		if 'overwrite_if_exists' not in model_params:
 			model_params['overwrite_if_exists'] = self.__overwrite_if_exists
 
 		def get_model_for_dataset(dataset: Dataset):
 			params = dict(model_params)
 			params['dataset'] = dataset
+			model_params['exp_name'] = f'{self.__exp_name}__{dataset.get_conf()["name"]}'
 			return get_model_by_name(name=name, **params)
 		return [get_model_for_dataset(d) for d in self.__datasets]
 
