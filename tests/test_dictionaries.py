@@ -37,7 +37,7 @@ def test_urban_dictionary_load_raw():
     assert records.iloc[3].word == 'dhet'   # case check
     assert records[records.word == 'bad entry'].empty   # remove bad entries
 
-    assert conf['name'] == 'UrbanDictionary'
+    assert conf['name'] == 'urban_dictionary'
     assert conf['count'] == 13
     assert conf['file_path'] == file_path
     assert conf['file_type'] == 'raw'
@@ -95,7 +95,7 @@ def test_wiktionary_load_raw():
     assert records.iloc[0].word == 'gnu fdl'
     assert records.iloc[10].word == 'livre'   # case check
 
-    assert conf['name'] == 'Wiktionary'
+    assert conf['name'] == 'wiktionary'
     assert conf['count'] == 15
     assert conf['file_path'] == file_path
     assert conf['file_type'] == 'raw'

@@ -23,7 +23,7 @@ lists:
     lst:
 
 dictionaries:
-  ud:
+  urban_dictionary:
     csv: 
     raw: 
   wiktionary:

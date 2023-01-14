@@ -146,7 +146,7 @@ class UrbanDictionary(DictionaryWithTwoFormats):
     """
 
     def __init__(self, file_path: str = None, file_type: str = 'csv'):
-        super().__init__(name='urbandictionary', file_type=file_type, file_path=file_path)
+        super().__init__(name='urban_dictionary', file_type=file_type, file_path=file_path)
 
     def _load_raw(self) -> pd.DataFrame:
         df = pd.read_csv(self._file_path, sep=r'\|')
