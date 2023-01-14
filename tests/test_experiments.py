@@ -4,7 +4,7 @@ from experiments import Experiment
 from utils import get_abs_file_path
 
 
-def test_experiment_run_new_from_dict_by_name(tmp_path):
+def test_experiment_run(tmp_path):
 	root_path = tmp_path
 	exp_root_path = root_path / 'experiments'
 	models_path = root_path / 'models'
@@ -70,9 +70,73 @@ def test_experiment_run_new_from_dict_by_name(tmp_path):
 		'experiments_root_path': exp_root_path
 	}
 	loaded_exp = Experiment(loaded_conf)
+	did_run = loaded_exp.run()
 
+	assert did_run == False
 	assert len(loaded_exp.get_models()) == 2
 	assert len(loaded_exp.label_dictionaries()) == 2
+
+
+def test_experiment_run_with_overwrite(tmp_path):
+	root_path = tmp_path
+	exp_root_path = root_path / 'experiments'
+	models_path = root_path / 'models'
+	datasets_path = root_path / 'datasets'
+	labeled_output_path = root_path / 'out'
+	expanded_root_path = root_path / 'expanded'
+	label_prob_threshold = 0
+
+	lexicon_path = get_abs_file_path(__file__, 'resources/lexicons/rand_3_labels_150_examples.csv')
+
+	exp_conf = {
+		'exp_name': 'test_exp_by_name',
+		'lexicon': {
+			'csv_path': lexicon_path
+		},
+		'dictionaries': [
+			{
+				'name': 'rand_3_labels_150_examples_1',
+				'file_path': get_abs_file_path(__file__, 'resources/dictionaries/rand_3_labels_150_examples.csv')
+			},
+			{
+				'name': 'rand_3_labels_150_examples_2',
+				'file_path': get_abs_file_path(__file__, 'resources/dictionaries/rand_3_labels_150_examples.csv')
+			}
+		],
+		'model': {
+			'name': 'bert',
+			'models_root_path': models_path,
+			'epochs': 1
+		},
+		'dataset': {
+			'test_count': 10,
+			'force_test_count': True,
+			'custom_root_path': datasets_path,
+			'exclusions': []
+		},
+		'experiments_root_path': exp_root_path,
+		'labeled_output_path': labeled_output_path,
+		'label_prob_threshold': label_prob_threshold,
+		'expanded_root_path': expanded_root_path,
+		'do_label_dictionaries': True,
+		'overwrite_if_exists': False
+	}
+	exp = Experiment(exp_conf)
+	exp.run()
+
+	loaded_conf = {
+		'exp_name': 'test_exp_by_name',
+		'experiments_root_path': exp_root_path,
+		'overwrite_if_exists': True
+	}
+	loaded_exp = Experiment(loaded_conf)
+	did_run = loaded_exp.run()
+
+	assert did_run == True
+	assert len(loaded_exp.get_models()) == 2
+	assert len(loaded_exp.label_dictionaries()) == 2
+	assert len(list(labeled_output_path.glob('*'))) == 2
+	assert len(list(expanded_root_path.glob('*'))) == 2
 
 
 def test_experiment_run_new_from_dict_by_path(tmp_path):

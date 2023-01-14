@@ -69,6 +69,7 @@ class Model(ObjectWithConf, ABC):
 			if models_root_path is not None else get_models_root_path()
 		self._datasets_root_path = datasets_root_path \
 			if datasets_root_path is not None or dataset is None else dataset.get_conf()['datasets_root_path']
+		self._overwrite_if_exists = overwrite_if_exists
 
 		if self._model_exists:
 			self._load()
@@ -77,7 +78,6 @@ class Model(ObjectWithConf, ABC):
 			self._dataset = dataset
 			self._train_df = self._dataset.get_train()
 			self._test_df = self._dataset.get_test()
-			self._overwrite_if_exists = overwrite_if_exists
 
 			self._training_start_time = None
 			self._creation_timestamp = None
@@ -121,10 +121,10 @@ class Model(ObjectWithConf, ABC):
 
 	@abstractmethod
 	def _load(self) -> Config:
+		# Some parameters shouldn't be loaded and set only by initializer
 		conf = Config(self._load_conf(self._get_conf_path()))
 
 		self._type_name = conf.type_name
-		self._overwrite_if_exists = conf.overwrite_if_exists
 		self._models_root_path = Path(conf.models_root_path) \
 			if conf.models_root_path is not None else get_models_root_path()
 		self._datasets_root_path = Path(conf.datasets_root_path) \

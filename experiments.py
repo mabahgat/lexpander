@@ -74,6 +74,7 @@ class Experiment(ObjectWithConf):
 
 		if self.__exists():
 			self.__load()
+			self.__loaded_experiment = True
 		else:
 			self.__lexicon = None
 			self.__dictionaries = None
@@ -82,6 +83,7 @@ class Experiment(ObjectWithConf):
 			self.__results = None
 			self.__labeled_dictionary_dfs = None
 			self.__expanded_lexicons = None
+			self.__loaded_experiment = False
 
 	def __exists(self):
 		return self.__exp_name in list_experiment_names(self.__experiments_root_paths)
@@ -112,15 +114,31 @@ class Experiment(ObjectWithConf):
 
 		if 'results' in self.__conf:
 			self.__logger.info(f'Loaded experiments has results')
-			self.__results = self.__conf.results
+			self.__results = [r.to_dict() for r in self.__conf.results]
 
 		if 'labeled_dictionary_paths' in self.__conf:
 			labeled_dict_paths = self.__conf.labeled_dictionary_paths
 			self.__logger.info(f'Loading labeled dictionaries {len(labeled_dict_paths)}')
 			self.__labeled_dictionary_dfs = [pd.read_csv(path, index_col=0) for path in labeled_dict_paths]
 			self.__logger.info(f'Loaded labeled dictionaries')
+		else:
+			self.__labeled_dictionary_dfs = None
+			self.__expanded_lexicons = None
 
-	def run(self):
+	def run(self) -> bool:
+		"""
+		Run the end to end experiment for new ones or when overwrite_if_exists was chosen at initialization
+		:return: boolean whether the experiment was run or not
+		"""
+		if self.__loaded_experiment:
+			if not self.__overwrite_if_exists:
+				self.__logger.info(
+					'Skipping running the experiment as it is a loaded one. '
+					'Use overwrite_if_exists to rerun.')
+				return False
+			else:
+				self.__logger.warning(f'Overwriting experiment {self.__exp_name}')
+
 		self.__lexicon = self.__get_lexicon()
 		self.__logger.info(f'Using lexicon with configuration "{self.__lexicon.get_conf()}"')
 
@@ -149,6 +167,8 @@ class Experiment(ObjectWithConf):
 		conf_path = self.__get_conf_path()
 		self._save_conf(conf_path)
 		self.__logger.info(f'Saved experiment configuration at {conf_path}')
+
+		return True
 
 	def get_results(self) -> List:
 		return self.__results
@@ -193,6 +213,9 @@ class Experiment(ObjectWithConf):
 	def get_labeled_dictionaries(self):
 		return self.__labeled_dictionary_dfs
 
+	def get_expanded_lexicons(self):
+		return self.__expanded_lexicons
+
 	def __get_lexicon(self):
 		name = None if 'name' not in self.__conf.lexicon else self.__conf.lexicon.name
 		params = self.__conf.lexicon.to_dict().copy()
@@ -234,9 +257,12 @@ class Experiment(ObjectWithConf):
 	def __get_models(self):
 		name = self.__conf.model.name
 		model_params = self.__conf.model.to_dict().copy()
+
+		model_params.pop('name')
 		if 'exp_name' not in model_params:
 			model_params['exp_name'] = self.__exp_name
-		model_params.pop('name')
+		if 'overwrite_if_exists' not in model_params:
+			model_params['overwrite_if_exists'] = self.__overwrite_if_exists
 
 		def get_model_for_dataset(dataset: Dataset):
 			params = dict(model_params)
