@@ -139,8 +139,9 @@ class BertClassifier(Model):
 		"""
 		probs = tf.nn.softmax(self._model.predict(encoded_text).logits).numpy().tolist()
 		label_indexes = [np.argmax(o) for o in probs]
+		label_probs = [np.amax(p) for p in probs]
 		labels = [self._idx_2_label[index] for index in label_indexes]
-		return labels, probs, label_indexes
+		return labels, label_probs, label_indexes
 
 	def __model_path(self) -> Path:
 		return self._models_root_path / self._exp_name
