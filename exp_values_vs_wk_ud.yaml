@@ -1,0 +1,14 @@
+exp_name: values_vs_ud_wk
+do_label_dictionaries: True
+quality_threshold: 10
+lexicon:
+  name: values
+dictionaries:
+  - name: urban_dictionary
+  - name: wiktionary
+model:
+  name: bert
+  epochs: 5
+dataset:
+  test_count: 200
+  force_test_count: True
