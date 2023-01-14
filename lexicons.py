@@ -146,6 +146,7 @@ class LookUpLexicon(Lexicon):
             return lookup_dict, label_class_set
 
     def label_term(self, token: str) -> List[str]:
+        token = str(token).lower()
         if token not in self._lookup:
             return []
         else:
@@ -273,6 +274,7 @@ class Liwc2015(Lexicon):
         return {remove_wild_card(key): value for key, value in self.__liwc.lexicon.items()}
 
     def label_term(self, token: str) -> List[str]:
+        token = str(token).lower()
         if self.__strict_matching:
             labels = self.__liwc_lookup.get(token, [])
         else:
@@ -310,6 +312,7 @@ class LookUpLexiconWithMapping(LookUpLexicon):
             self.__label_mapper = None
 
     def label_term(self, token: str) -> List[str]:
+        token = str(token).lower()
         labels = super().label_term(token)
         if self.__label_mapper is not None:
             return self.__label_mapper.map_list(labels)
@@ -501,6 +504,7 @@ class Liwc22(Lexicon):
             return labels_lst
 
         csv_df['labels'] = csv_df.apply(get_annotations, axis=1)
+        csv_df = csv_df[csv_df.labels.apply(lambda l: len(l) > 0)]
         return csv_df['labels'].to_dict()
 
     def __load_from_csv(self):
@@ -517,7 +521,7 @@ class Liwc22(Lexicon):
         return csv_df['labels'].to_dict()
 
     def label_term(self, token: str) -> List[str]:
-        token = token.lower()
+        token = str(token).lower()
         if token not in self._lookup:
             return []
         else:
@@ -570,6 +574,7 @@ class ExpandedLexicon(Lexicon):
                 if len(self.__source_lexicon.label_term(term)) == 0}
 
     def label_term(self, term: str) -> List[str]:
+        term = str(term).lower()
         if term in self.__lookup:
             return [self.__lookup[term]]
         else:

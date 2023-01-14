@@ -170,27 +170,27 @@ def test_liwc2015_limited_cats():
 
 def test_lookup_lexicon_with_mapping():
     dict_path = get_abs_file_path(__file__, 'resources/lexicons/test_values.csv')
-    used_labels = {'value1', 'value3'}
+    used_labels = {'life', 'family'}
     label_map = {
-        'value1': None,
-        'value2': None,
-        'value3': None,
-        'value4': 'value2',
-        'value5': 'value1',
-        'value6': 'value2'
+        'life': None,
+        'order': None,
+        'family': None,
+        'social': 'order',
+        'truth': 'life',
+        'religion': 'order'
     }
     lexicon = LookUpLexiconWithMapping(csv_path=dict_path,
                                        use_labels=used_labels,
                                        label_map=label_map)
     conf = lexicon.get_conf()
 
-    assert lexicon.label_term('word1') == ['value1']
-    assert lexicon.label_term('word3') == ['value3']
+    assert lexicon.label_term('word1') == ['life']
+    assert lexicon.label_term('word3') == ['family']
     assert lexicon.label_term('word4') == []
-    assert lexicon.label_term('word5') == ['value1']
+    assert lexicon.label_term('word5') == ['life']
     assert lexicon.label_term('word6') == []
 
-    assert conf['labels'] == {'value1', 'value3'}
+    assert conf['labels'] == {'life', 'family'}
     assert conf['label_count'] == 2
     assert 'label_map' in conf
 
@@ -200,10 +200,19 @@ def test_values():
     lexicon = Values(csv_path=dict_path)
     conf = lexicon.get_conf()
 
-    assert lexicon.label_term('word1') == ['value1', 'value2']
-    assert lexicon.label_term('word4') == ['value2']
+    assert lexicon.label_term('word1') == ['life', 'order']
+    assert lexicon.label_term('word4') == ['order']
 
     assert conf['name'] == 'values'
+
+
+def test_values_case():
+    dict_path = get_abs_file_path(__file__, 'resources/lexicons/test_values.csv')
+    lexicon = Values(csv_path=dict_path)
+    conf = lexicon.get_conf()
+
+    assert lexicon.label_term('Word1') == ['life', 'order']
+    assert lexicon.label_term('Word4') == ['order']
 
 
 def test_liwc2022_from_csv():
