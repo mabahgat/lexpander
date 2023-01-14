@@ -44,6 +44,7 @@ def test_bert_classifier(tmp_path):
 
 	test_df = model.get_test_labeled()
 
+	assert len(test_df) == len(dataset.get_test())
 	assert 'label_out' in test_df
 	assert 'prob_out' in test_df
 

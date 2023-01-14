@@ -87,12 +87,12 @@ class Dataset(ObjectWithConf):
         if self._name not in list_dataset_names(self._datasets_root_path):
             raise DatasetNotFoundError(f'A dataset with name "{self._name}" was not found '
                                        f'in {str(self._datasets_root_path)}')
-        train_df = pd.read_csv(self._train_path)
+        train_df = pd.read_csv(self._train_path, index_col=0)
         if self._valid_path.exists():
-            valid_df = pd.read_csv(self._valid_path)
+            valid_df = pd.read_csv(self._valid_path, index_col=0)
         else:
             valid_df = None
-        test_df = pd.read_csv(self._test_path)
+        test_df = pd.read_csv(self._test_path, index_col=0)
         return train_df, valid_df, test_df
 
     def __load_conf(self):

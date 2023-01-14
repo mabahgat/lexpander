@@ -54,9 +54,8 @@ class BertClassifier(Model):
 			self._tokenizer = TFBertTokenizer.from_pretrained(pretrained_model_name)
 			self._model = None
 
+			self.__cached_test_labeled_df = None
 			self.__cached_performance_result = None
-			self.__cached_test_labels = None
-			self.__cached_test_label_probs = None
 
 	def __get_labels(self):
 		train_labels = set(self._train_df.label.to_list())
@@ -91,15 +90,16 @@ class BertClassifier(Model):
 		:return: whether model was trained (weights updated or not)
 		"""
 		if self._model is not None:
+
 			self._logger.info('Model already trained, skipping training step')
 			return False
-		else:
-			train_x, train_y = self.__encode_set(self._train_df)
 
-			model = self.__build_model()
-			model.fit(train_x, train_y, epochs=self._epochs)
-			self._model = model
-			return True
+		train_x, train_y = self.__encode_set(self._train_df)
+
+		model = self.__build_model()
+		model.fit(train_x, train_y, epochs=self._epochs)
+		self._model = model
+		return True
 
 	def __build_model(self):
 		model = TFBertForSequenceClassification.from_pretrained(self._pretrained_model_name,
@@ -113,8 +113,9 @@ class BertClassifier(Model):
 			test_x, test_y = self.__encode_set(self._test_df)
 			test_y_label_out, test_y_out_prob, test_y_out = self.__apply(test_x)
 
-			self.__cached_test_labels = test_y_label_out
-			self.__cached_test_label_probs = test_y_out_prob
+			self.__cached_test_labeled_df = self._test_df.copy(deep=True)
+			self.__cached_test_labeled_df[Model.LABEL_OUT_COLUMN] = test_y_label_out
+			self.__cached_test_labeled_df[Model.PROB_OUT_COLUMN] = test_y_out_prob
 
 			f_score = float(metrics.f1_score(test_y, test_y_out, average='macro'))
 			accuracy = float(metrics.accuracy_score(test_y, test_y_out))
@@ -174,14 +175,17 @@ class BertClassifier(Model):
 		self._idx_2_label = {index: label for label, index in self._label_2_idx.items()}
 
 		self._tokenizer = TFBertTokenizer.from_pretrained(self._pretrained_model_name)
-		self._model = self.__load_model()
+		if not self._overwrite_if_exists:
+			self._model = self.__load_model()
+			self.__cached_performance_result = conf.performance_result
+		else:
+			self._model = None
+			self.__cached_performance_result = None
 
 		self.__load_test_labels()
 
 	def __load_test_labels(self):
-		test_df = pd.read_csv(self.__get_test_results_path(), index_col=0)
-		self.__cached_test_labels = test_df.label_out.to_list()
-		self.__cached_test_label_probs = test_df.prob_out.to_list()
+		self.__cached_test_labeled_df = pd.read_csv(self.__get_test_results_path(), index_col=0)
 
 	def __load_model(self):
 		model = self.__build_model()
@@ -190,12 +194,9 @@ class BertClassifier(Model):
 		return model
 
 	def get_test_labeled(self) -> pd.DataFrame:
-		if self.__cached_test_labels is None or self.__cached_test_label_probs is None:
+		if self.__cached_test_labeled_df is None:
 			self._eval()
-		test_df = self._test_df.copy(deep=True)
-		test_df[Model.LABEL_OUT_COLUMN] = self.__cached_test_labels
-		test_df[Model.PROB_OUT_COLUMN] = self.__cached_test_label_probs
-		return test_df
+		return self.__cached_test_labeled_df
 
 	def apply(self, dictionary: Dictionary) -> pd.DataFrame:
 		df = dictionary.get_all_records()

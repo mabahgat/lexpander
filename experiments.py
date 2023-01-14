@@ -176,12 +176,12 @@ class Experiment(ObjectWithConf):
 	def label_dictionaries(self) -> List[pd.DataFrame]:
 		if self.__labeled_dictionary_dfs is None:
 			self.__logger.info('Labeling dictionaries')
-			self.__labeled_dictionary_dfs = self.__get_output()
+			self.__labeled_dictionary_dfs = self.__get_labeled_dictionaries()
 
 			self.__logger.info('Storing labeled dictionaries')
-			output_paths = self.__store_output()
-			self.__conf['labeled_dictionary_paths'] = output_paths
-			self.__logger.info(f'Labeled dictionaries saved at {output_paths[0].parents}')
+			labeled_dictionaries_path = self.__store_labeled_dictionaries()
+			self.__conf['labeled_dictionary_paths'] = labeled_dictionaries_path
+			self.__logger.info(f'Labeled dictionaries saved at {labeled_dictionaries_path[0].parents}')
 
 		return self.__labeled_dictionary_dfs
 
@@ -273,13 +273,13 @@ class Experiment(ObjectWithConf):
 	def __get_results(self):
 		return [m.train_and_eval() for m in self.__models]
 
-	def __get_output(self) -> List[pd.DataFrame]:
+	def __get_labeled_dictionaries(self) -> List[pd.DataFrame]:
 		return [model.apply(dictionary) for model, dictionary in zip(self.__models, self.__dictionaries)]
 
 	def __get_default_labeled_output_path(self) -> Path:
 		return Path(global_config.storage.root) / global_config.storage.labeled_out / self.__exp_name
 
-	def __store_output(self) -> List[Path]:
+	def __store_labeled_dictionaries(self) -> List[Path]:
 		output_path = self._labeled_output_path \
 			if self._labeled_output_path is not None else self.__get_default_labeled_output_path()
 		output_path.mkdir(parents=True, exist_ok=self.__overwrite_if_exists)
