@@ -125,28 +125,38 @@ class DatasetGenerator(ObjectWithConf):
 
 	def __get_dictionary_valid_entries(self, dictionary: Dictionary) -> pd.DataFrame:
 		df = dictionary.get_all_records()
+		self.__logger.info(f'Dictionary: {dictionary.get_conf()["name"]} - all entry count: {len(df)}')
 
 		tqdm.pandas(desc=f'Labeling {dictionary.get_conf()["name"]}')
 		df[DatasetGenerator.LABEL_COLUMN] = df.word.progress_apply(lambda term: self.__lexicon.label_term(term))
 
 		df = df[df.label.apply(lambda l: len(l) > 0)]
 		df.label = df.label.apply(lambda l: l[0])
+		self.__logger.info(
+			f'Dictionary: {dictionary.get_conf()["name"]} - after removing entries not in lexicon: {len(df)}')
 
 		def contained_in_exclusions(term: str) -> bool:
 			for exclusion in self.__exclusions:
 				if exclusion.contains(term):
 					return True
 			return False
-
+		self.__logger.info(f'Applying {len(self.__exclusions)} exclusions')
 		df = df[~df.word.progress_apply(contained_in_exclusions)]
+		self.__logger.info(f'Dictionary: {dictionary.get_conf()["name"]} - after applying exclusions: {len(df)}')
 
 		if self.__top_quality_count is not None and Dictionary.QUALITY_COLUMN in df:
 			self.__logger.info(f'Selecting top {self.__top_quality_count} records for each term')
 			df = df.groupby(by=Dictionary.WORD_COLUMN, as_index=False).head(self.__top_quality_count)
+			self.__logger.info(
+				f'Dictionary: {dictionary.get_conf()["name"]} - '
+				f'after selection top {self.__top_quality_count}: {len(df)}')
 
 		if self.__quality_threshold is not None and Dictionary.QUALITY_COLUMN in df:
 			self.__logger.info(f'Filtering records with threshold {self.__quality_threshold} inclusive')
 			df = df[df.quality >= self.__quality_threshold]
+			self.__logger.info(
+				f'Dictionary: {dictionary.get_conf()["name"]} - '
+				f'after filtering with threshold (inclusive) {self.__quality_threshold}: {len(df)}')
 		return df
 
 	@staticmethod

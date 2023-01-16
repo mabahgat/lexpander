@@ -1,4 +1,4 @@
-exp_name: liwc2015_vs_ud_wk
+exp_name: liwc2015-root9_vs_ud_wk-top10
 do_label_dictionaries: True
 quality_threshold: 10
 lexicon:

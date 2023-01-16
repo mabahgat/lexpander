@@ -130,6 +130,8 @@ class Experiment(ObjectWithConf):
 		Run the end to end experiment for new ones or when overwrite_if_exists was chosen at initialization
 		:return: boolean whether the experiment was run or not
 		"""
+		self.__logger.info(f'Starting for experiment {self.__exp_name}')
+		
 		if self.__loaded_experiment:
 			if not self.__overwrite_if_exists:
 				self.__logger.info(
@@ -267,7 +269,7 @@ class Experiment(ObjectWithConf):
 		def get_model_for_dataset(dataset: Dataset):
 			params = dict(model_params)
 			params['dataset'] = dataset
-			model_params['exp_name'] = f'{self.__exp_name}__{dataset.get_conf()["name"]}'
+			params['exp_name'] = f'{self.__exp_name}__{dataset.get_conf()["name"]}'
 			return get_model_by_name(name=name, **params)
 		return [get_model_for_dataset(d) for d in self.__datasets]
 
