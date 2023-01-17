@@ -76,7 +76,7 @@ def plot_precision_recall_curve(df: pd.DataFrame,
 
 	plt.show()
 
-	return ax
+	return {thr: (pr, re) for thr, pr, re in zip(thr_lst, p_lst, r_lst)}
 
 
 def plot_label_counts(sr: pd.Series, title: str = None, plot_type: str = 'bar'):
@@ -105,4 +105,4 @@ def plot_counts_vs_threshold(df: pd.DataFrame, title: str = None):
 		'count': counts
 	}
 	pd.DataFrame.from_dict(thr_counts_dict).set_index('threshold').plot(title=title)
-	return thr_counts_dict
+	return {thr: count for thr, count in zip(thr_lst, counts)}

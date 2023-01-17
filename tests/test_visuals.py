@@ -60,14 +60,11 @@ def test_plot_precision_recall_curve():
 		'prob_out': [0.1, 0.4, 0.7, 0.9]
 	}
 	df = pd.DataFrame.from_dict(data)
-	ax = plot_precision_recall_curve(df,
-									 title='curve',
-									 x_lim=(0, 1),
-									 y_lim=(0, 1))
+	tpr = plot_precision_recall_curve(df, title='curve', x_lim=(0, 1), y_lim=(0, 1))
 
-	assert ax.get_title() == 'curve'
-	assert ax.get_xlim() == (0, 1)
-	assert ax.get_ylim() == (0, 1)
+	assert tpr[0] == (1, 1)
+	assert tpr[0.5] == (1, 0.5)
+	assert tpr[1] == (0, 0)
 
 
 def test_plot_counts_vs_threshold():
