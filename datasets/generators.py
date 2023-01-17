@@ -107,13 +107,17 @@ class DatasetGenerator(ObjectWithConf):
 		assert len(self.__dictionaries) == len(test_sets)
 		assert len(self.__dictionaries) == len(train_sets)
 
-		return [Dataset(name=f'{self.__exp_name}_{dictionary.get_conf()["name"]}',
+		return [Dataset(name=DatasetGenerator.generate_dataset_name_for_dictionary(self.__exp_name, dictionary),
 						train_df=train,
 						test_df=test,
 						overwrite_if_exists=self.__overwrite_if_exists,
 						source_path=dictionary.get_conf()['file_path'],
 						datasets_root_path=self.__dataset_root_path)
 				for train, test, dictionary in zip(train_sets, test_sets, self.__dictionaries)]
+
+	@staticmethod
+	def generate_dataset_name_for_dictionary(exp_name: str, dictionary: Dictionary):
+		return f'{exp_name}_{dictionary.get_conf()["name"]}'
 
 	def __get_labeled_entries(self) -> List[pd.DataFrame]:
 		"""

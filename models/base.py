@@ -157,6 +157,9 @@ class Model(ObjectWithConf, ABC):
 		"""
 		pass
 
+	def exists(self) -> bool:
+		return self._model_exists
+
 	def _get_conf_path(self):
 		return self._models_root_path / self._exp_name / f'{self._exp_name}__conf.yaml'
 

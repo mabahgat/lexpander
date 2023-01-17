@@ -6,7 +6,7 @@ import pandas as pd
 
 from common import ObjectWithConf, list_sorted_names_in_dir
 from config import global_config, Config
-from datasets.base import Dataset
+from datasets.base import Dataset, list_dataset_names
 from datasets.generators import DatasetGenerator
 from dictionaries import get_dictionary, Dictionary
 from lexicons import get_lexicon, ExpandedLexicon
@@ -219,46 +219,77 @@ class Experiment(ObjectWithConf):
 		return self.__expanded_lexicons
 
 	def __get_lexicon(self):
+		if self.__lexicon is not None:
+			self.__logger.info('Using cached lexicons')
+			return self.__lexicon
+
 		name = None if 'name' not in self.__conf.lexicon else self.__conf.lexicon.name
 		params = self.__conf.lexicon.to_dict().copy()
 		params.pop('name', None)
 		return get_lexicon(name=name, **params)
 
 	def __get_dictionaries(self):
+		if self.__dictionaries is not None:
+			self.__logger.info('Using cached dictinaries')
+			return self.__dictionaries
+
 		def get_dictionary_from_conf(conf_dict):
 			params = conf_dict.copy()
 			name = params.pop('name')
 			return get_dictionary(name=name, **params)
 		return [get_dictionary_from_conf(conf.to_dict()) for conf in self.__conf.dictionaries]
 
-	def __get_datasets(self):
+	def __get_datasets(self) -> List[Dataset]:
+		if self.__datasets is not None:
+			self.__logger.info('Using cached datasets')
+			return self.__datasets
+
 		dataset_conf = self.__conf.dataset
-
-		force_test_count = dataset_conf.force_test_count if 'force_test_count' in dataset_conf else True
-		same_train_set = dataset_conf.same_train_set if 'same_train_set' in dataset_conf else False
 		custom_root_path = Path(dataset_conf.custom_root_path) if 'custom_root_path' in dataset_conf else None
-		top_quality_count = dataset_conf.top_quality_count if 'top_quality_count' in dataset_conf else None
-		quality_threshold = dataset_conf.quality_threshold if 'quality_threshold' in dataset_conf else None
-		exclusions = dataset_conf.exclusions if 'exclusions' in dataset_conf else None
+		if self.__datasets_exist(custom_root_path):
+			self.__logger.info('Loading datasets from disk')
+			return [
+				Dataset(DatasetGenerator.generate_dataset_name_for_dictionary(self.__exp_name, dictionary))
+				for dictionary in self.__dictionaries]
+		else:
+			self.__logger.info('Generating datasets')
+			force_test_count = dataset_conf.force_test_count if 'force_test_count' in dataset_conf else True
+			same_train_set = dataset_conf.same_train_set if 'same_train_set' in dataset_conf else False
+			top_quality_count = dataset_conf.top_quality_count if 'top_quality_count' in dataset_conf else None
+			quality_threshold = dataset_conf.quality_threshold if 'quality_threshold' in dataset_conf else None
+			exclusions = dataset_conf.exclusions if 'exclusions' in dataset_conf else None
 
-		generator = DatasetGenerator(exp_name=self.__exp_name,
-									 lexicon=self.__lexicon,
-									 dictionaries=self.__dictionaries,
-									 test_count=dataset_conf.test_count,
-									 force_test_count=force_test_count,
-									 same_train_set=same_train_set,
-									 top_quality_count=top_quality_count,
-									 quality_threshold=quality_threshold,
-									 exclusions=exclusions,
-									 dataset_root_path=custom_root_path)
+			generator = DatasetGenerator(exp_name=self.__exp_name,
+										 lexicon=self.__lexicon,
+										 dictionaries=self.__dictionaries,
+										 test_count=dataset_conf.test_count,
+										 force_test_count=force_test_count,
+										 same_train_set=same_train_set,
+										 top_quality_count=top_quality_count,
+										 quality_threshold=quality_threshold,
+										 exclusions=exclusions,
+										 dataset_root_path=custom_root_path)
 
-		return generator.generate()
+			return generator.generate()
+
+	def __datasets_exist(self, datasets_root_path: Path):
+		# Because dataset generator generates a testset dependent on both, both datasets have to exist before skipping
+		# the generation step
+		existing_datasets = list_dataset_names(datasets_root_path=datasets_root_path)
+		dataset_names = [
+			DatasetGenerator.generate_dataset_name_for_dictionary(self.__exp_name, dictionary)
+			for dictionary in self.__dictionaries]
+		return set(dataset_names).issubset(existing_datasets)
 
 	def __load_datasets(self) -> List[Dataset]:
 		datasets_conf = self.__conf.datasets
 		return [Dataset(name=conf.name, datasets_root_path=conf.datasets_root_path) for conf in datasets_conf]
 
 	def __get_models(self):
+		if self.__models is not None:
+			self.__logger.info('Using cached models')
+			return self.__models
+
 		name = self.__conf.model.name
 		model_params = self.__conf.model.to_dict().copy()
 
@@ -274,7 +305,14 @@ class Experiment(ObjectWithConf):
 		return [get_model_for_dataset(d) for d in self.__datasets]
 
 	def __get_results(self):
-		return [m.train_and_eval() for m in self.__models]
+		def get_result_for_model(m: Model):
+			if m.exists():
+				self.__logger.info(f'Model "{m.get_conf()["exp_name"]}" exists already, skipping training and eval step')
+				return m.get_conf()['performance_result']
+			else:
+				self.__logger.info(f'Training new model')
+				return m.train_and_eval()
+		return [get_result_for_model(m) for m in self.__models]
 
 	def __get_labeled_dictionaries(self) -> List[pd.DataFrame]:
 		return [model.apply(dictionary) for model, dictionary in zip(self.__models, self.__dictionaries)]

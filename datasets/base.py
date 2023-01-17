@@ -11,12 +11,14 @@ def get_datasets_root_path() -> Path:
     return Path(global_config.storage.root) / global_config.storage.datasets_subdir
 
 
-def list_dataset_names(datasets_root_path: Path = get_datasets_root_path()) -> List[str]:
+def list_dataset_names(datasets_root_path: Path = None) -> List[str]:
     """
     Returns a list of dictionaries
     :param datasets_root_path: Optional override for datasets root directory
     :return: Names as string list
     """
+    if datasets_root_path is None:
+        datasets_root_path = get_datasets_root_path()
     return list_sorted_names_in_dir(datasets_root_path)
 
 
