@@ -5,7 +5,7 @@ storage:
   datasets_subdir: datasets/ # root for train
   models_subdir: models/ # root for trained models
   expand_out: expand_out/ # Expansion output
-logging: NOTSET
+logging: INFO
 
 lexicons:
   liwc2015:
