@@ -79,33 +79,41 @@ def plot_precision_recall_curve(df: pd.DataFrame,
 	return {thr: (pr, re) for thr, pr, re in zip(thr_lst, p_lst, r_lst)}
 
 
-def plot_label_counts(sr: pd.Series, title: str = None, plot_type: str = 'bar', sort_by_index=True):
+def plot_label_counts(sr: pd.Series, title: str = None, plot_type: str = 'bar', sort_by_index=True, font_size=25):
 	"""
 	Plots counts in the form of either bar or pie charts
 	:param sr: series containing values to count
 	:param title: plot title
 	:param plot_type: string either 'bar' or 'pie'
 	:param sort_by_index: sort order based on index values rather than count values (good for comparison)
+	:param font_size: text on chart font size
 	:return:
 	"""
 	counts = sr.value_counts()
 	if sort_by_index:
 		counts = counts.sort_index()
 	if plot_type == 'bar':
-		counts.plot.bar(title=title)
+		counts.plot.bar(title=title, fontsize=font_size)
 	elif plot_type == 'pie':
-		counts.plot.pie(title=title)
+		counts.plot.pie(title=title, fontsize=font_size)
 	else:
 		raise ValueError(f'Unknown plot type "{plot_type}"')
 	return counts
 
 
-def plot_counts_vs_threshold(df: pd.DataFrame, title: str = None):
+def plot_counts_vs_threshold(df: pd.DataFrame, title: str = None, font_size=25):
+	"""
+	Plots number of entries with same or higher confidence to the passed threshold
+	:param df: Data frame that contains a "prob_out" field
+	:param title: plot title
+	:param font_size: text on chart font size
+	:return:
+	"""
 	thr_lst = __get_thresholds_list()
 	counts = [len(df[df.prob_out >= thr]) for thr in thr_lst]
 	thr_counts_dict = {
 		'threshold': thr_lst,
 		'count': counts
 	}
-	pd.DataFrame.from_dict(thr_counts_dict).set_index('threshold').plot(title=title)
+	pd.DataFrame.from_dict(thr_counts_dict).set_index('threshold').plot(title=title, fontsize=font_size)
 	return {thr: count for thr, count in zip(thr_lst, counts)}
