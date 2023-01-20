@@ -79,15 +79,18 @@ def plot_precision_recall_curve(df: pd.DataFrame,
 	return {thr: (pr, re) for thr, pr, re in zip(thr_lst, p_lst, r_lst)}
 
 
-def plot_label_counts(sr: pd.Series, title: str = None, plot_type: str = 'bar'):
+def plot_label_counts(sr: pd.Series, title: str = None, plot_type: str = 'bar', sort_by_index=True):
 	"""
 	Plots counts in the form of either bar or pie charts
 	:param sr: series containing values to count
 	:param title: plot title
 	:param plot_type: string either 'bar' or 'pie'
+	:param sort_by_index: sort order based on index values rather than count values (good for comparison)
 	:return:
 	"""
 	counts = sr.value_counts()
+	if sort_by_index:
+		counts = counts.sort_index()
 	if plot_type == 'bar':
 		counts.plot.bar(title=title)
 	elif plot_type == 'pie':
