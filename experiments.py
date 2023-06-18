@@ -50,6 +50,15 @@ class Experiment(ObjectWithConf):
 		if conf is not None and conf_path is not None:
 			raise ValueError('Both configuration dictionary and configuration path can not be specified together')
 
+		self.__lexicon = None
+		self.__dictionaries = None
+		self.__datasets = None
+		self.__models = None
+		self.__results = None
+		self.__labeled_dictionary_dfs = None
+		self.__expanded_lexicons = None
+		self.__loaded_experiment = False
+
 		self.__logger = logging.getLogger(__name__)
 
 		config_dict = ObjectWithConf._load_conf(conf_path) if conf_path is not None else conf
@@ -75,15 +84,6 @@ class Experiment(ObjectWithConf):
 		if self.__exists():
 			self.__load()
 			self.__loaded_experiment = True
-		else:
-			self.__lexicon = None
-			self.__dictionaries = None
-			self.__datasets = None
-			self.__models = None
-			self.__results = None
-			self.__labeled_dictionary_dfs = None
-			self.__expanded_lexicons = None
-			self.__loaded_experiment = False
 
 	def __exists(self):
 		return self.__exp_name in list_experiment_names(self.__experiments_root_paths)

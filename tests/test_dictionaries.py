@@ -1,6 +1,6 @@
 import pandas as pd
 
-from dictionaries import UrbanDictionary, Wiktionary, get_dictionary, SimpleDictionary
+from dictionaries import UrbanDictionary, Wiktionary, get_dictionary, SimpleDictionary, Opted
 from tests.utils import get_abs_file_path
 
 
@@ -111,3 +111,21 @@ def test_wiktionary_load_raw_empty_checks():
     assert records.iloc[12].text == 'meaning only'
     assert records.iloc[13].text == 'example only'
     assert records.iloc[14].word == 'entry 3'
+
+
+def test_opted_load():
+    file_path = get_abs_file_path(__file__, 'resources/dictionaries/opted.csv')
+    dictionary = Opted(file_path=file_path)
+    records = dictionary.get_all_records()
+
+    assert len(records) == 3
+    assert dictionary.get_definition('cat').word == 'cat'
+    assert dictionary.get_definition('cat').text == 'Pet to spend time with'
+
+
+def test_opted_content():
+    file_path = get_abs_file_path(__file__, 'resources/dictionaries/opted.csv')
+    dictionary = Opted(file_path=file_path)
+    records = dictionary.get_all_records()
+
+    records.groupby(by='word', as_index=False).head(1)

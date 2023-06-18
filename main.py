@@ -15,7 +15,7 @@ def run(config_file_path: Path):
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
 		print(f'usage: {sys.argv[0]} <exp.yaml>', file=sys.stderr)
-		print(f'\texp.yam: experiment configuration in yaml format', file=sys.stderr)
+		print(f'\texp.yaml: experiment configuration in yaml format', file=sys.stderr)
 		exit(1)
 
 	exp_config_path = Path(sys.argv[1])

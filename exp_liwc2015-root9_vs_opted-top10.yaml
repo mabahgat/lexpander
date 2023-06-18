@@ -1,0 +1,24 @@
+exp_name: liwc2015-root9_vs_opted-top10
+do_label_dictionaries: True
+quality_threshold: 10
+lexicon:
+  name: liwc2015
+  use_labels:
+    - affect
+    - social
+    - cogproc
+    - percept
+    - bio
+    - drives
+    - relativ
+    - pconcern
+    - informal
+dictionaries:
+  - name: opted
+model:
+  name: bert
+  epochs: 5
+dataset:
+  test_count: 1000
+  force_test_count: True
+  top_quality_count: 10

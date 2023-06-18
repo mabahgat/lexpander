@@ -1,0 +1,25 @@
+exp_name: values-11_vs_opted-top10
+do_label_dictionaries: True
+lexicon:
+  name: values
+  use_labels:
+    - life
+    - parents
+    - truth
+    - religion
+    - social
+    - feeling-good
+    - children
+    - animals
+    - learning
+    - order
+    - accepting-others
+dictionaries:
+  - name: opted
+model:
+  name: bert
+  epochs: 5
+dataset:
+  test_count: 200
+  force_test_count: True
+  top_quality_count: 10
