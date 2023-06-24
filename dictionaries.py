@@ -78,6 +78,8 @@ def get_dictionary(name: str, **kwargs) -> Dictionary:
         return get_instance(Wiktionary)
     elif name == 'ud' or name == 'urban_dictionary':
         return get_instance(UrbanDictionary)
+    elif name == 'opted':
+        return get_instance(Opted)
     else:
         params = kwargs.copy()
         params['name'] = name
@@ -197,3 +199,21 @@ class Wiktionary(DictionaryWithTwoFormats):
         df[Dictionary.TEXT_COLUMN] = df.apply(lambda r: '{} {}'.format(r['meaning'], r['example']).strip(), axis=1)
         df[Dictionary.QUALITY_COLUMN] = 100     # wiktionary entries are reviewed
         return df[[Dictionary.WORD_COLUMN, Dictionary.TEXT_COLUMN, Dictionary.QUALITY_COLUMN]]
+
+
+class Opted(SimpleDictionary):
+
+    def __init__(self, file_path: str = None):
+        if file_path is None:
+            file_path = global_config.dictionaries['opted']['csv']
+        super().__init__(name='opted', file_path=file_path)
+
+    def _load(self) -> pd.DataFrame:
+        df = super()._load()
+        df.index = df.index.str.lower()
+        df.index.rename('lookup_index', inplace=True)   # TODO fix index for Dictionary class
+        df.text = df.text.fillna('')    # TODO add this for all dictionaries, breaks bert tokenization if NaN exists
+        df[Dictionary.WORD_COLUMN] = df.index
+        assert Dictionary.WORD_COLUMN in df.columns
+        assert Dictionary.TEXT_COLUMN in df.columns
+        return df
