@@ -18,9 +18,28 @@ from utils import SynchronousThrottle, CachableCall
 logging.basicConfig(level=global_config.logging)
 
 
+class Example:
+	def __init__(self, word: str, label: str, context_or_definition: str = None, example: str = None):
+		self.word = word
+		self.label = label
+		self.context_or_definition = context_or_definition
+		self.example = example
+
+	def __str__(self):
+		return f'{self.word} -> {self.label}'
+
+	def __repr__(self):
+		return self.__str__()
+
+
 # Parent agent class that takes definition, example and word to generate a label from a list of labels
 class Agent(ABC):
-	def __init__(self, lexicon_name: str, labels: List[str], call_throttle_per_minute: int, cache_file: str):
+	def __init__(self,
+				 lexicon_name: str,
+				 labels: List[str],
+				 call_throttle_per_minute: int,
+				 cache_file: str,
+				 ask_for_label_only: bool = False):
 		self._lexicon_name = lexicon_name
 		self._labels = [l.lower() for l in labels]
 		self._labels_string = ', '.join(self._labels)
@@ -29,17 +48,28 @@ class Agent(ABC):
 		self._throttled_call = SynchronousThrottle(call_count=call_throttle_per_minute, period_in_minutes=1)
 		self._cachable_call = CachableCall(cache_file_path=cache_file)
 
+		self._ask_for_label_only = ask_for_label_only
+
 	# generates a label from a list of labels
 	def label(self,
 			  word: str,
 			  definition_or_context: str,
 			  example: str = None) -> str:
+		prompt = self.prompt(word, definition_or_context, example)
+		agent_answer = self.answer(prompt)
+		return self.extract_label(agent_answer)
+
+	def prompt(self,
+			   word: str,
+			   definition_or_context: str,
+			   example: str = None) -> str:
 		if example is None:
 			prompt = self.prompt_with_context(definition_or_context, word)
 		else:
 			prompt = self.prompt_with_details(definition_or_context, example, word)
-		agent_answer = self.answer(prompt)
-		return self.extract_label(agent_answer)
+		if self._ask_for_label_only:
+			prompt += '\nRespond with label only'
+		return prompt
 
 	def prompt_with_context(self,
 							context: str,
@@ -71,6 +101,19 @@ class Agent(ABC):
 		self._logging.debug(f'Details generated prompt: {prompt}')
 		return prompt
 
+	def label_with_few_shot(self,
+							training_examples: List[Example],
+							word: str,
+							definition_or_context: str,
+							example: str = None) -> str:
+		prompt = ''
+		prompt += 'Using the following LIWC 2015 labels for the following words as example:\n'
+		for training_example in training_examples:
+			prompt += f'"{training_example.word}" labeled as "{training_example.label}"\n'
+		prompt += self.prompt(word, definition_or_context, example)
+		agent_answer = self.answer(prompt)
+		return self.extract_label(agent_answer)
+
 	def answer(self, prompt: str) -> str:
 		return self._cachable_call(self._throttled_call, self.answer_impl, prompt)
 
@@ -97,23 +140,26 @@ class Agent(ABC):
 
 
 class ChatGPT(Agent):
-	def __init__(self, lexicon_name: str, labels: List[str]):
+	def __init__(self, lexicon_name: str, labels: List[str], ask_for_label_only: bool = False, max_out_tokens=1024):
 		openai.organization = global_config.apis.chat_gpt.org_id
 		openai.api_key = global_config.apis.chat_gpt.api_key
 		self.model_name = global_config.apis.chat_gpt.model_name
 		self.__chat_gpt = openai.Completion()
+		self.__max_out_tokens = max_out_tokens
 
 		super().__init__(lexicon_name,
 						 labels,
 						 call_throttle_per_minute=global_config.apis.chat_gpt.throttle_per_minute,
-						 cache_file=global_config.apis.chat_gpt.cache_path)
+						 cache_file=global_config.apis.chat_gpt.cache_path,
+						 ask_for_label_only=ask_for_label_only)
 
 	def answer_impl(self,
 					prompt: str) -> str:
+		self._logging.debug(f'engine: {self.model_name}\nprompt: {prompt}\nmax_tokens: {self.__max_out_tokens}')
 		response = self.__chat_gpt.create(
 			engine=self.model_name,
 			prompt=f"{prompt}",
-			max_tokens=1024,
+			max_tokens=self.__max_out_tokens,
 			temperature=0
 		)
 		return response['choices'][0]['text']
@@ -121,13 +167,14 @@ class ChatGPT(Agent):
 
 # Send question to HugChat and return answer
 class HugChat(Agent):
-	def __init__(self, lexicon_name: str, labels: List[str]):
+	def __init__(self, lexicon_name: str, labels: List[str], ask_for_label_only: bool = False):
 		self._chat = HuggingChatApiHelper(user_id=global_config.apis.hugchat.user_id,
 										  token=global_config.apis.hugchat.token)
 		super().__init__(lexicon_name,
 						 labels,
 						 call_throttle_per_minute=global_config.apis.hugchat.throttle_per_minute,
-						 cache_file=global_config.apis.hugchat.cache_path)
+						 cache_file=global_config.apis.hugchat.cache_path,
+						 ask_for_label_only=ask_for_label_only)
 
 	def answer_impl(self,
 					prompt: str) -> str:
